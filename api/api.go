@@ -1,8 +1,6 @@
 package api
 
 import (
-	"context"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -30,7 +28,7 @@ func New(db *db.DB) *API {
 	}
 }
 
-func (a *API) Run(ctx context.Context) {
+func (a *API) Run() {
 	a.engine = gin.Default()
 
 	if config.Store.API.DevCors {
@@ -44,6 +42,8 @@ func (a *API) Run(ctx context.Context) {
 	}
 
 	a.setRoutes()
+
+	logrus.Infof("starting api on port %s", config.Store.API.Port)
 
 	err := a.engine.Run(":" + config.Store.API.Port)
 	if err != nil {

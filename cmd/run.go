@@ -41,7 +41,9 @@ var runCmd = &cobra.Command{
 		}
 
 		a := api.New(db)
-		a.Run(ctx)
+		go a.Run()
+
+		<-ctx.Done()
 
 		// cleanup
 		_ = metricsSrv.Close()

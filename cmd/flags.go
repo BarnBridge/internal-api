@@ -18,3 +18,7 @@ func addAPIFlags(cmd *cobra.Command) {
 	cmd.Flags().Bool("api.dev-cors", false, "Enable development cors for HTTP API")
 	cmd.Flags().String("api.dev-cors-host", "", "Allowed host for HTTP API dev cors")
 }
+
+func addMetricsFlags(cmd *cobra.Command) {
+	cmd.Flags().Int64("metrics.port", 9909, "Port on which to serve Prometheus metrics")
+}
