@@ -265,32 +265,17 @@ func abrogationProposalPassed(forVotes string, bondStaked string) (bool, error) 
 }
 
 func isFailedProposal(p types.ProposalFull) (bool, error) {
-	pro, err := decimal.NewFromString(p.ForVotes)
-	if err != nil {
-		return false, errors.Wrap(err, "could not convert forVotes to decimal")
-	}
-
-	against, err := decimal.NewFromString(p.AgainstVotes)
-	if err != nil {
-		return false, errors.Wrap(err, "could not convert againstVotes to decimal")
-	}
-
-	bondStaked, err := decimal.NewFromString(p.BondStaked)
-	if err != nil {
-		return false, errors.Wrap(err, "could not convert bondStaked to decimal")
-	}
-
 	minQuorum := decimal.NewFromInt(p.MinQuorum)
 	acceptance := decimal.NewFromInt(p.AcceptanceThreshold)
 
-	if pro.Add(against).LessThan(bondStaked.Mul(minQuorum).DivRound(decimal.NewFromInt(100), 18)) {
+	if p.ForVotes.Add(p.AgainstVotes).LessThan(p.BondStaked.Mul(minQuorum).DivRound(decimal.NewFromInt(100), 18)) {
 		return true, nil
 	}
 
-	total := pro.Add(against)
+	total := p.ForVotes.Add(p.AgainstVotes)
 	minForVotes := total.Mul(acceptance).DivRound(decimal.NewFromInt(100), 18)
 
-	return pro.LessThanOrEqual(minForVotes), nil
+	return p.ForVotes.LessThanOrEqual(minForVotes), nil
 }
 
 func (g *Governance) getProposalEvents(ctx context.Context, id uint64) ([]types.Event, error) {

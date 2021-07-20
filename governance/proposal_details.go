@@ -30,11 +30,11 @@ func (g *Governance) ProposalDetailsHandler(ctx *gin.Context) {
 			   grace_period_duration,
 			   acceptance_threshold,
 			   min_quorum,
-		       coalesce(( select sum(power) from proposal_votes(proposal_id) where support = true ), 0) as for_votes,
-			   coalesce(( select sum(power) from proposal_votes(proposal_id) where support = false ), 0) as against_votes,
-		       coalesce(( select bond_staked_at_ts(to_timestamp(create_time+warm_up_duration)) ), 0) as bond_staked,
-			   ( select * from proposal_state(proposal_id) ) as proposal_state
-		from governance_proposals
+		       coalesce(( select sum(power) from governance.proposal_votes(proposal_id) where support = true ), 0) as for_votes,
+			   coalesce(( select sum(power) from governance.proposal_votes(proposal_id) where support = false ), 0) as against_votes,
+		       coalesce(( select governance.bond_staked_at_ts(create_time+warm_up_duration) ), 0) as bond_staked,
+			   ( select * from governance.proposal_state(proposal_id) ) as proposal_state
+		from governance.proposals
 		where proposal_id = $1
 	`, proposalID).Scan(
 		&p.Id,

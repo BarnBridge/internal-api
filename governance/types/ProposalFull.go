@@ -1,5 +1,9 @@
 package types
 
+import (
+	"github.com/shopspring/decimal"
+)
+
 type ProposalFull struct {
 	ProposalBase
 
@@ -16,7 +20,7 @@ type ProposalFull struct {
 	AcceptanceThreshold int64 `json:"acceptanceThreshold"`
 	MinQuorum           int64 `json:"minQuorum"`
 
-	BondStaked string `json:"-"`
+	BondStaked decimal.Decimal `json:"-"`
 
 	History []HistoryEvent `json:"history"`
 }
