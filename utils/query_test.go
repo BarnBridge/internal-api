@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,9 +15,9 @@ func TestBuildQuery1(t *testing.T) {
 	query, params := BuildQueryWithFilter(`
 		select *
 		from smart_yield_transaction_history
-		where %s
+		$filters$
 		order by included_in_block desc, tx_index desc, log_index desc
-		%s %s;
+		$offset$ $limit$;
 	`,
 		filters,
 		nil,
@@ -27,7 +26,7 @@ func TestBuildQuery1(t *testing.T) {
 
 	assert.True(t, strings.Contains(query, "protocol_id = ANY($2)"))
 
-	_, ok := params[1].(*pq.StringArray)
+	_, ok := params[1].([]string)
 	assert.True(t, ok)
 }
 
@@ -50,9 +49,9 @@ func TestBuildQuery(t *testing.T) {
 			   block_timestamp,
 			   included_in_block
 		from smart_yield_transaction_history
-		where %s
+		$filters$
 		order by included_in_block desc, tx_index desc, log_index desc
-		%s %s;
+		$offset$ $limit$;
 	`,
 		filters,
 		&limit,
@@ -68,9 +67,9 @@ func TestBuildQuery(t *testing.T) {
 	query, params = BuildQueryWithFilter(`
 		select count(*)
 		from smart_yield_transaction_history
-		where %s
+		$filters$
 		order by included_in_block desc, tx_index desc, log_index desc
-		%s %s;
+		$offset$ $limit$;
 	`,
 		new(Filters).Add("user_address", "0xdeadbeef"),
 		nil,

@@ -61,9 +61,9 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 			   coalesce(( select sum(power) from governance.proposal_votes(proposal_id) where support = true ), 0) as for_votes,
 			   coalesce(( select sum(power) from governance.proposal_votes(proposal_id) where support = false ), 0) as against_votes
 		from governance.proposals
-		%s
+		$filters$
 		order by proposal_id desc
-		%s %s
+		$offset$ $limit$
 	`, filters, &limit, &offset)
 
 	rows, err := g.db.Connection().Query(ctx, query, params...)
@@ -99,8 +99,7 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 
 	query, params = utils.BuildQueryWithFilter(`
 		select count(*) from governance.proposals
-		%s
-		%s %s
+		$filters$
 	`, filters, nil, nil)
 
 	var count int

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Filters []QueryFilter
@@ -31,12 +32,16 @@ type QueryFilter struct {
 	Where string
 }
 
+const FiltersIdentifier = "$filters$"
+const OffsetIdentifier = "$offset$"
+const LimitIdentifier = "$limit$"
+
 func BuildQueryWithFilter(query string, filters *Filters, limit *int64, offset *int64) (string, []interface{}) {
 	var where string
 	var offsetFilter, limitFilter string
 	var params []interface{}
-	if len(*filters) > 0 {
 
+	if len(*filters) > 0 {
 		for _, filter := range *filters {
 			if where != "" {
 				where += " and "
@@ -69,5 +74,9 @@ func BuildQueryWithFilter(query string, filters *Filters, limit *int64, offset *
 		limitFilter = fmt.Sprintf("limit $%d", len(params))
 	}
 
-	return fmt.Sprintf(query, where, offsetFilter, limitFilter), params
+	query = strings.Replace(query, FiltersIdentifier, where, 1)
+	query = strings.Replace(query, OffsetIdentifier, offsetFilter, 1)
+	query = strings.Replace(query, LimitIdentifier, limitFilter, 1)
+
+	return query, params
 }
