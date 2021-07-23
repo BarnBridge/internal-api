@@ -18,7 +18,7 @@ func (g *Governance) SetRoutes(engine *gin.Engine) {
 	governance := engine.Group("/api/governance")
 	governance.GET("/proposals", g.AllProposalsHandler)
 	governance.GET("/proposals/:proposalID", g.ProposalDetailsHandler)
-	// governance.GET("/proposals/:proposalID/votes", a.VotesHandler)
+	governance.GET("/proposals/:proposalID/votes", g.VotesHandler)
 	// governance.GET("/proposals/:proposalID/events", a.handleProposalEvents)
 	// governance.GET("/overview", a.BondOverview)
 	// governance.GET("/voters", a.handleVoters)

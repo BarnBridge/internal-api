@@ -4,6 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/barnbridge/internal-api/db"
+	"github.com/barnbridge/internal-api/utils"
 )
 
 func Error(c *gin.Context, err error) {
@@ -31,6 +34,23 @@ func OK(c *gin.Context, data interface{}, meta ...interface{}) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func OKWithBlock(c *gin.Context, db *db.DB, data interface{}, meta ...interface{}) {
+	block, err := utils.GetHighestBlock(c, db)
+	if err != nil {
+		Error(c, err)
+		return
+	}
+
+	if meta == nil || len(meta) == 0 {
+		OK(c, data, map[string]interface{}{
+			"block": block,
+		})
+	} else {
+		meta[0].(map[string]interface{})["block"] = block
+		OK(c, data, meta...)
+	}
 }
 
 func NotFound(c *gin.Context) {

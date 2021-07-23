@@ -6,7 +6,6 @@ import (
 
 	"github.com/barnbridge/internal-api/governance/types"
 	"github.com/barnbridge/internal-api/response"
-	"github.com/barnbridge/internal-api/utils"
 )
 
 func (g *Governance) ProposalDetailsHandler(ctx *gin.Context) {
@@ -76,13 +75,5 @@ func (g *Governance) ProposalDetailsHandler(ctx *gin.Context) {
 
 	p.History = history
 
-	block, err := utils.GetHighestBlock(ctx, g.db)
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	response.OK(ctx, p, map[string]interface{}{
-		"block": block,
-	})
+	response.OKWithBlock(ctx, g.db, p)
 }

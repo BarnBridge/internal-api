@@ -109,11 +109,5 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 		return
 	}
 
-	block, err := utils.GetHighestBlock(ctx, g.db)
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	response.OK(ctx, proposals, map[string]interface{}{"count": count, "block": block})
+	response.OKWithBlock(ctx, g.db, proposals, map[string]interface{}{"count": count})
 }
