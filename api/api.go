@@ -20,6 +20,12 @@ type Config struct {
 type API struct {
 	engine *gin.Engine
 	db     *db.DB
+
+	packages []Package
+}
+
+type Package interface {
+	SetRoutes(engine *gin.Engine)
 }
 
 func New(db *db.DB) *API {
@@ -29,6 +35,8 @@ func New(db *db.DB) *API {
 }
 
 func (a *API) Run() {
+	a.registerPackages()
+
 	a.engine = gin.Default()
 
 	if config.Store.API.DevCors {
@@ -42,6 +50,9 @@ func (a *API) Run() {
 	}
 
 	a.setRoutes()
+	for _, p := range a.packages {
+		p.SetRoutes(a.engine)
+	}
 
 	logrus.Infof("starting api on port %s", config.Store.API.Port)
 
