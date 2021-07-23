@@ -6,9 +6,10 @@ import (
 )
 
 type store struct {
-	Database database `mapstructure:"db"`
-	Metrics  metrics  `mapstructure:"metrics"`
-	API      api      `mapstructure:"api"`
+	Database  database  `mapstructure:"db"`
+	Metrics   metrics   `mapstructure:"metrics"`
+	API       api       `mapstructure:"api"`
+	Addresses addresses `mapstructure:"addresses"`
 }
 
 var Store store

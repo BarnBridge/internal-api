@@ -1,3 +1,8 @@
+addresses:
+    # Address of the $BOND token
+    bond: ""
+    # Exclude transfers from these addresses when computing holders of BOND
+    exclude-transfers: []
 api:
     # Enable development cors for HTTP API
     dev-cors: false
@@ -22,3 +27,6 @@ db:
     user: core
 # Display debug messages
 logging: ""
+metrics:
+    # Port on which to serve Prometheus metrics
+    port: 9909

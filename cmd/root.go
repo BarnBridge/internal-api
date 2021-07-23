@@ -84,4 +84,6 @@ func init() {
 
 	// local flags;
 	RootCmd.Flags().BoolVar(&version, "version", false, "Display the current version of this CLI")
+
+	addMetricsFlags(RootCmd)
 }

@@ -1,3 +1,9 @@
+addresses:
+  # Address of the $BOND token
+  bond: ""
+  # Exclude transfers from these addresses when computing holders of BOND
+  exclude-transfers: []
+
 # api-related fields
 api:
   # The port on which the API will be exposed (default:3001)
