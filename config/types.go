@@ -20,3 +20,8 @@ type api struct {
 	DevCors     bool   `mapstructure:"dev-cors"`
 	DevCorsHost string `mapstructure:"dev-cors-host"`
 }
+
+type addresses struct {
+	Bond             string
+	ExcludeTransfers []string `mapstructure:"exclude-transfers"`
+}

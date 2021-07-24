@@ -55,4 +55,5 @@ func init() {
 	addDBFlags(generateConfigCmd)
 	addAPIFlags(generateConfigCmd)
 	addMetricsFlags(generateConfigCmd)
+	addAddressesFlags(generateConfigCmd)
 }

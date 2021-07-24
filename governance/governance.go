@@ -20,7 +20,7 @@ func (g *Governance) SetRoutes(engine *gin.Engine) {
 	governance.GET("/proposals/:proposalID", g.ProposalDetailsHandler)
 	governance.GET("/proposals/:proposalID/votes", g.VotesHandler)
 	governance.GET("/proposals/:proposalID/events", g.HandleProposalEvents)
-	// governance.GET("/overview", a.BondOverview)
+	governance.GET("/overview", g.HandleOverview)
 	// governance.GET("/voters", a.handleVoters)
 	// governance.GET("/abrogation-proposals", a.AllAbrogationProposals)
 	// governance.GET("/abrogation-proposals/:proposalID", a.AbrogationProposalDetailsHandler)
