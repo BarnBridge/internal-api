@@ -7,30 +7,27 @@ import (
 	"github.com/jackc/pgx/v4"
 
 	"github.com/barnbridge/internal-api/governance/types"
+	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
-	"github.com/barnbridge/internal-api/utils"
 )
 
 func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
-	limit, err := utils.GetQueryLimit(ctx)
+	qb := query.New()
+	err := qb.SetLimitFromCtx(ctx)
 	if err != nil {
 		response.BadRequest(ctx, err)
 		return
 	}
 
-	page, err := utils.GetQueryPage(ctx)
+	err = qb.SetOffsetFromCtx(ctx)
 	if err != nil {
 		response.BadRequest(ctx, err)
 		return
 	}
-
-	offset := (page - 1) * limit
-
-	filters := utils.NewFilters()
 
 	title := ctx.DefaultQuery("title", "")
 	if title != "" {
-		filters.Add("lower(title)", "%"+strings.ToLower(title)+"%", "like")
+		qb.Filters.Add("lower(title)", "%"+strings.ToLower(title)+"%", "like")
 	}
 
 	proposalState := strings.ToUpper(ctx.DefaultQuery("state", "all"))
@@ -44,10 +41,10 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 			states = []string{proposalState}
 		}
 
-		filters.Add("(select governance.proposal_state(proposal_id) )", states)
+		qb.Filters.Add("(select governance.proposal_state(proposal_id) )", states)
 	}
 
-	query, params := utils.BuildQueryWithFilter(`
+	q, params := qb.Run(`
 		select proposal_id,
 			   proposer,
 			   description,
@@ -64,9 +61,9 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 		$filters$
 		order by proposal_id desc
 		$offset$ $limit$
-	`, filters, &limit, &offset)
+	`)
 
-	rows, err := g.db.Connection().Query(ctx, query, params...)
+	rows, err := g.db.Connection().Query(ctx, q, params...)
 	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
 		return
@@ -97,13 +94,13 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 		proposals = append(proposals, p)
 	}
 
-	query, params = utils.BuildQueryWithFilter(`
+	q, params = qb.UsePagination(false).Run(`
 		select count(*) from governance.proposals
 		$filters$
-	`, filters, nil, nil)
+	`)
 
 	var count int
-	err = g.db.Connection().QueryRow(ctx, query, params...).Scan(&count)
+	err = g.db.Connection().QueryRow(ctx, q, params...).Scan(&count)
 	if err != nil {
 		response.Error(ctx, err)
 		return

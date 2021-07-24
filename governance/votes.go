@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/barnbridge/internal-api/governance/types"
+	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
-	"github.com/barnbridge/internal-api/utils"
 )
 
 func (g *Governance) VotesHandler(ctx *gin.Context) {
@@ -22,21 +22,19 @@ func (g *Governance) VotesHandler(ctx *gin.Context) {
 		return
 	}
 
-	limit, err := utils.GetQueryLimit(ctx)
+	qb := query.New()
+
+	err = qb.SetLimitFromCtx(ctx)
 	if err != nil {
 		response.BadRequest(ctx, err)
 		return
 	}
 
-	page, err := utils.GetQueryPage(ctx)
+	err = qb.SetOffsetFromCtx(ctx)
 	if err != nil {
 		response.BadRequest(ctx, err)
 		return
 	}
-
-	offset := (page - 1) * limit
-
-	filters := utils.NewFilters()
 
 	support := strings.ToLower(ctx.DefaultQuery("support", ""))
 	if support != "" {
@@ -44,15 +42,15 @@ func (g *Governance) VotesHandler(ctx *gin.Context) {
 			response.BadRequest(ctx, errors.New("wrong value for support parameter"))
 			return
 		}
-		filters.Add("support", support)
+		qb.Filters.Add("support", support)
 	}
 
-	query, params := utils.BuildQueryWithFilter(`
+	query, params := qb.UsePagination(true).Run(`
 	select user_id, support, block_timestamp, power from governance.proposal_votes($param_overwrite$)
 	$filters$
 	order by power desc
 	$offset$ $limit$
-	`, filters, &limit, &offset)
+	`)
 
 	params = append(params, proposalID)
 	query = strings.Replace(query, "$param_overwrite$", fmt.Sprintf("$%d", len(params)), 1)
@@ -77,10 +75,10 @@ func (g *Governance) VotesHandler(ctx *gin.Context) {
 		votes = append(votes, v)
 	}
 
-	query, params = utils.BuildQueryWithFilter(`
+	query, params = qb.UsePagination(false).Run(`
 	select count(*) from governance.proposal_votes($param_overwrite$)
 	$filters$
-	`, filters, nil, nil)
+	`)
 
 	params = append(params, proposalID)
 	query = strings.Replace(query, "$param_overwrite$", fmt.Sprintf("$%d", len(params)), 1)
