@@ -3,6 +3,7 @@ module github.com/barnbridge/internal-api
 go 1.16
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.1
 	github.com/jackc/pgtype v1.8.0

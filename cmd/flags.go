@@ -20,5 +20,10 @@ func addAPIFlags(cmd *cobra.Command) {
 }
 
 func addMetricsFlags(cmd *cobra.Command) {
-	cmd.Flags().Int64("metrics.port", 9909, "Port on which to serve Prometheus metrics")
+	cmd.PersistentFlags().Int64("metrics.port", 9909, "Port on which to serve Prometheus metrics")
+}
+
+func addAddressesFlags(cmd *cobra.Command) {
+	cmd.Flags().String("addresses.bond", "", "Address of the $BOND token")
+	cmd.Flags().StringSlice("addresses.exclude-transfers", []string{}, "Exclude transfers from these addresses when computing holders of BOND")
 }

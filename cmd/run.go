@@ -55,5 +55,7 @@ var runCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(runCmd)
 
+	addAPIFlags(runCmd)
 	addDBFlags(runCmd)
+	addAddressesFlags(runCmd)
 }
