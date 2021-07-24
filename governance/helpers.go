@@ -1,7 +1,11 @@
 package governance
 
 import (
+	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 
 	"github.com/barnbridge/internal-api/governance/types"
 )
@@ -24,4 +28,14 @@ func getTimeLeft(state types.ProposalState, createTime, warmUpDuration, activeDu
 	}
 
 	return &timeLeft
+}
+
+func getProposalId(ctx *gin.Context) (int64, error) {
+	proposalIDString := ctx.Param("proposalID")
+	proposalID, err := strconv.ParseInt(proposalIDString, 10, 64)
+	if err != nil {
+		return 0, errors.New("invalid proposalID")
+	}
+
+	return proposalID, nil
 }

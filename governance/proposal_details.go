@@ -3,16 +3,21 @@ package governance
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
+	"github.com/pkg/errors"
 
 	"github.com/barnbridge/internal-api/governance/types"
 	"github.com/barnbridge/internal-api/response"
 )
 
-func (g *Governance) ProposalDetailsHandler(ctx *gin.Context) {
-	proposalID := ctx.Param("proposalID")
+func (g *Governance) HandleProposalDetails(ctx *gin.Context) {
+	proposalID, err := getProposalId(ctx)
+	if err != nil {
+		response.Error(ctx, errors.New("invalid proposalID"))
+		return
+	}
 
 	var p types.ProposalFull
-	err := g.db.Connection().QueryRow(ctx, `
+	err = g.db.Connection().QueryRow(ctx, `
 		select proposal_id,
 			   proposer,
 			   description,

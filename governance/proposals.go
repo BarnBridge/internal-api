@@ -11,15 +11,15 @@ import (
 	"github.com/barnbridge/internal-api/response"
 )
 
-func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
-	qb := query.New()
-	err := qb.SetLimitFromCtx(ctx)
+func (g *Governance) HandleProposals(ctx *gin.Context) {
+	builder := query.New()
+	err := builder.SetLimitFromCtx(ctx)
 	if err != nil {
 		response.BadRequest(ctx, err)
 		return
 	}
 
-	err = qb.SetOffsetFromCtx(ctx)
+	err = builder.SetOffsetFromCtx(ctx)
 	if err != nil {
 		response.BadRequest(ctx, err)
 		return
@@ -27,7 +27,7 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 
 	title := ctx.DefaultQuery("title", "")
 	if title != "" {
-		qb.Filters.Add("lower(title)", "%"+strings.ToLower(title)+"%", "like")
+		builder.Filters.Add("lower(title)", "%"+strings.ToLower(title)+"%", "like")
 	}
 
 	proposalState := strings.ToUpper(ctx.DefaultQuery("state", "all"))
@@ -41,10 +41,10 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 			states = []string{proposalState}
 		}
 
-		qb.Filters.Add("(select governance.proposal_state(proposal_id) )", states)
+		builder.Filters.Add("(select governance.proposal_state(proposal_id) )", states)
 	}
 
-	q, params := qb.Run(`
+	q, params := builder.Run(`
 		select proposal_id,
 			   proposer,
 			   description,
@@ -68,7 +68,6 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 		response.Error(ctx, err)
 		return
 	}
-
 	defer rows.Close()
 
 	var proposals []types.ProposalBase
@@ -94,7 +93,7 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 		proposals = append(proposals, p)
 	}
 
-	q, params = qb.UsePagination(false).Run(`
+	q, params = builder.UsePagination(false).Run(`
 		select count(*) from governance.proposals
 		$filters$
 	`)
@@ -106,5 +105,5 @@ func (g *Governance) AllProposalsHandler(ctx *gin.Context) {
 		return
 	}
 
-	response.OKWithBlock(ctx, g.db, proposals, map[string]interface{}{"count": count})
+	response.OKWithBlock(ctx, g.db, proposals, response.Meta().Set("count", count))
 }

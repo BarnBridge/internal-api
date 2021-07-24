@@ -44,12 +44,20 @@ func OKWithBlock(c *gin.Context, db *db.DB, data interface{}, meta ...interface{
 	}
 
 	if meta == nil || len(meta) == 0 {
-		OK(c, data, map[string]interface{}{
-			"block": block,
-		})
+		OK(c, data, Meta().Set("block", block))
 	} else {
-		meta[0].(map[string]interface{})["block"] = block
-		OK(c, data, meta...)
+
+		if m, ok := meta[0].(map[string]interface{}); ok {
+			m["block"] = block
+			OK(c, data, meta...)
+			return
+		}
+
+		if m, ok := meta[0].(ResponseMeta); ok {
+			m.Set("block", block)
+			OK(c, data, meta...)
+			return
+		}
 	}
 }
 
