@@ -12,7 +12,7 @@ func TestBuildQuery1(t *testing.T) {
 	qb.Filters.Add("user_address", "0xdeadbeef")
 	qb.Filters.Add("protocol_id", []string{"compound/v2", "aave/v2"})
 
-	query, params := qb.UsePagination(true).Run(`
+	query, params := qb.WithPagination().Run(`
 		select *
 		from smart_yield_transaction_history
 		$filters$
@@ -34,7 +34,7 @@ func TestBuildQuery(t *testing.T) {
 	qb.Filters.Add("user_address", "0xdeadbeef")
 	qb.Filters.Add("protocol_id", "compound/v2")
 
-	query, params := qb.UsePagination(true).Run(`
+	query, params := qb.WithPagination().Run(`
 		select protocol_id,
 			   sy_address,
 			   underlying_token_address,
@@ -58,7 +58,7 @@ func TestBuildQuery(t *testing.T) {
 
 	qb.Filters = new(Filters).Add("user_address", "0xdeadbeef")
 
-	query, params = qb.UsePagination(false).Run(`
+	query, params = qb.Run(`
 		select count(*)
 		from smart_yield_transaction_history
 		$filters$

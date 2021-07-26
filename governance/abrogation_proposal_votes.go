@@ -43,7 +43,7 @@ func (g *Governance) HandleAbrogationProposalVotes(ctx *gin.Context) {
 		builder.Filters.Add("support", support)
 	}
 
-	q, params := builder.UsePagination(true).Run(`
+	q, params := builder.WithPagination().Run(`
 	select user_id, support, block_timestamp, power
 	from governance.abrogation_proposal_votes($param_overwrite$)
 	$filters$
@@ -75,7 +75,7 @@ func (g *Governance) HandleAbrogationProposalVotes(ctx *gin.Context) {
 		votes = append(votes, v)
 	}
 
-	q, params = builder.UsePagination(false).Run(`
+	q, params = builder.Run(`
 	select count(*) from governance.abrogation_proposal_votes($param_overwrite$)
 	$filters
 	`)

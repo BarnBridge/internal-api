@@ -14,17 +14,6 @@ import (
 
 func (h *YieldFarming) StakingActionsList(ctx *gin.Context) {
 	builder := query.New()
-	err := builder.SetLimitFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
-
-	err = builder.SetOffsetFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
 
 	userAddress := ctx.DefaultQuery("userAddress", "all")
 	if userAddress != "all" {
@@ -51,7 +40,7 @@ func (h *YieldFarming) StakingActionsList(ctx *gin.Context) {
 		builder.Filters.Add("t.token_address", tokenAddress)
 	}
 
-	q, params := builder.UsePagination(true).Run(`
+	q, params := builder.WithPaginationFromContext(ctx).Run(`
 		select
 			tx_hash,
 			user_address,
@@ -83,7 +72,7 @@ func (h *YieldFarming) StakingActionsList(ctx *gin.Context) {
 		stakingActions = append(stakingActions, sa)
 	}
 
-	q, params = builder.UsePagination(false).Run(`select count(*) from yield_farming.transactions t $filters$`)
+	q, params = builder.Run(`select count(*) from yield_farming.transactions t $filters$`)
 	var count int
 	err = h.db.Connection().QueryRow(ctx, q, params...).Scan(&count)
 	if err != nil {

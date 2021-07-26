@@ -93,7 +93,7 @@ func (g *Governance) HandleProposals(ctx *gin.Context) {
 		proposals = append(proposals, p)
 	}
 
-	q, params = builder.UsePagination(false).Run(`
+	q, params = builder.Run(`
 		select count(*) from governance.proposals
 		$filters$
 	`)

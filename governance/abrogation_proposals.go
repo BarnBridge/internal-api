@@ -23,7 +23,7 @@ func (g *Governance) HandleAbrogationProposals(ctx *gin.Context) {
 		return
 	}
 
-	q, params := builder.UsePagination(true).Run(`
+	q, params := builder.WithPagination().Run(`
 	select proposal_id, creator, create_time
 	from governance.abrogation_proposals
 	order by proposal_id desc

@@ -87,10 +87,25 @@ func (qb *Builder) buildWhere() (string, []interface{}) {
 	return where, params
 }
 
-func (qb *Builder) UsePagination(use bool) *Builder {
-	qb.usePagination = use
+func (qb *Builder) WithPagination() *Builder {
+	nqb := *qb
+	nqb.usePagination = true
+	return &nqb
+}
 
-	return qb
+func (qb *Builder) WithPaginationFromContext(ctx *gin.Context) *Builder {
+	nqb := *qb
+	nqb.usePagination = true
+	err := nqb.SetLimitFromCtx(ctx)
+	if err != nil {
+		nqb.SetLimit(10)
+	}
+
+	err = nqb.SetOffsetFromCtx(ctx)
+	if err != nil {
+		nqb.SetOffset(1)
+	}
+	return &nqb
 }
 
 func (qb *Builder) Run(query string) (string, []interface{}) {
