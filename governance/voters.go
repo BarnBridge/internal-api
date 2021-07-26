@@ -11,19 +11,8 @@ import (
 
 func (g *Governance) HandleVoters(ctx *gin.Context) {
 	builder := query.New()
-	err := builder.SetLimitFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
 
-	err = builder.SetOffsetFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
-
-	q, params := builder.WithPagination().Run(`
+	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 	select user_address, bond_staked, locked_until, delegated_power, votes, proposals, voting_power, has_active_delegation
 	from governance.voters
 	where bond_staked + voting_power > 0

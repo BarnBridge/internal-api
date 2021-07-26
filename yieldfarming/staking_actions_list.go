@@ -40,7 +40,7 @@ func (h *YieldFarming) StakingActionsList(ctx *gin.Context) {
 		builder.Filters.Add("t.token_address", tokenAddress)
 	}
 
-	q, params := builder.WithPaginationFromContext(ctx).Run(`
+	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 		select
 			tx_hash,
 			user_address,

@@ -43,7 +43,7 @@ func (g *Governance) HandleVotes(ctx *gin.Context) {
 		builder.Filters.Add("support", support)
 	}
 
-	q, params := builder.WithPagination().Run(`
+	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 	select user_id, support, block_timestamp, power from governance.proposal_votes($param_overwrite$)
 	$filters$
 	order by power desc

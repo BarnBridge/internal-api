@@ -13,17 +13,6 @@ import (
 
 func (g *Governance) HandleProposals(ctx *gin.Context) {
 	builder := query.New()
-	err := builder.SetLimitFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
-
-	err = builder.SetOffsetFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
 
 	title := ctx.DefaultQuery("title", "")
 	if title != "" {
