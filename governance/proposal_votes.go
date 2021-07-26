@@ -2,7 +2,6 @@ package governance
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -14,23 +13,22 @@ import (
 	"github.com/barnbridge/internal-api/response"
 )
 
-func (g *Governance) VotesHandler(ctx *gin.Context) {
-	proposalIDString := ctx.Param("proposalID")
-	proposalID, err := strconv.ParseInt(proposalIDString, 10, 64)
+func (g *Governance) HandleVotes(ctx *gin.Context) {
+	proposalID, err := getProposalId(ctx)
 	if err != nil {
 		response.Error(ctx, errors.New("invalid proposalID"))
 		return
 	}
 
-	qb := query.New()
+	builder := query.New()
 
-	err = qb.SetLimitFromCtx(ctx)
+	err = builder.SetLimitFromCtx(ctx)
 	if err != nil {
 		response.BadRequest(ctx, err)
 		return
 	}
 
-	err = qb.SetOffsetFromCtx(ctx)
+	err = builder.SetOffsetFromCtx(ctx)
 	if err != nil {
 		response.BadRequest(ctx, err)
 		return
@@ -42,10 +40,10 @@ func (g *Governance) VotesHandler(ctx *gin.Context) {
 			response.BadRequest(ctx, errors.New("wrong value for support parameter"))
 			return
 		}
-		qb.Filters.Add("support", support)
+		builder.Filters.Add("support", support)
 	}
 
-	query, params := qb.UsePagination(true).Run(`
+	q, params := builder.UsePagination(true).Run(`
 	select user_id, support, block_timestamp, power from governance.proposal_votes($param_overwrite$)
 	$filters$
 	order by power desc
@@ -53,13 +51,14 @@ func (g *Governance) VotesHandler(ctx *gin.Context) {
 	`)
 
 	params = append(params, proposalID)
-	query = strings.Replace(query, "$param_overwrite$", fmt.Sprintf("$%d", len(params)), 1)
+	q = strings.Replace(q, "$param_overwrite$", fmt.Sprintf("$%d", len(params)), 1)
 
-	rows, err := g.db.Connection().Query(ctx, query, params...)
+	rows, err := g.db.Connection().Query(ctx, q, params...)
 	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
 		return
 	}
+	defer rows.Close()
 
 	var votes []types.Vote
 
@@ -75,20 +74,20 @@ func (g *Governance) VotesHandler(ctx *gin.Context) {
 		votes = append(votes, v)
 	}
 
-	query, params = qb.UsePagination(false).Run(`
+	q, params = builder.UsePagination(false).Run(`
 	select count(*) from governance.proposal_votes($param_overwrite$)
 	$filters$
 	`)
 
 	params = append(params, proposalID)
-	query = strings.Replace(query, "$param_overwrite$", fmt.Sprintf("$%d", len(params)), 1)
+	q = strings.Replace(q, "$param_overwrite$", fmt.Sprintf("$%d", len(params)), 1)
 
 	var count int
-	err = g.db.Connection().QueryRow(ctx, query, params...).Scan(&count)
+	err = g.db.Connection().QueryRow(ctx, q, params...).Scan(&count)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	response.OKWithBlock(ctx, g.db, votes, map[string]interface{}{"count": count})
+	response.OKWithBlock(ctx, g.db, votes, response.Meta().Set("count", count))
 }

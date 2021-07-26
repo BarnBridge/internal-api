@@ -16,15 +16,15 @@ func New(db *db.DB) *Governance {
 
 func (g *Governance) SetRoutes(engine *gin.Engine) {
 	governance := engine.Group("/api/governance")
-	governance.GET("/proposals", g.AllProposalsHandler)
-	governance.GET("/proposals/:proposalID", g.ProposalDetailsHandler)
-	governance.GET("/proposals/:proposalID/votes", g.VotesHandler)
+	governance.GET("/proposals", g.HandleProposals)
+	governance.GET("/proposals/:proposalID", g.HandleProposalDetails)
+	governance.GET("/proposals/:proposalID/votes", g.HandleVotes)
 	governance.GET("/proposals/:proposalID/events", g.HandleProposalEvents)
 	governance.GET("/overview", g.HandleOverview)
 	governance.GET("/voters", g.HandleVoters)
-	// governance.GET("/abrogation-proposals", a.AllAbrogationProposals)
-	// governance.GET("/abrogation-proposals/:proposalID", a.AbrogationProposalDetailsHandler)
-	// governance.GET("/abrogation-proposals/:proposalID/votes", a.AbrogationVotesHandler)
-	// governance.GET("/treasury/transactions", a.handleTreasuryTxs)
-	// governance.GET("/treasury/tokens", a.handleTreasuryTokens)
+	governance.GET("/abrogation-proposals", g.HandleAbrogationProposals)
+	governance.GET("/abrogation-proposals/:proposalID", g.HandleAbrogationProposalDetails)
+	governance.GET("/abrogation-proposals/:proposalID/votes", g.HandleAbrogationProposalVotes)
+	governance.GET("/treasury/transactions", g.HandleTreasuryTxs)
+	governance.GET("/treasury/tokens", g.HandleTreasuryTokens)
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/barnbridge/internal-api/response"
 )
 
-func (g *Governance) HandleVoters(ctx *gin.Context) {
+func (g *Governance) HandleAbrogationProposals(ctx *gin.Context) {
 	builder := query.New()
 	err := builder.SetLimitFromCtx(ctx)
 	if err != nil {
@@ -24,10 +24,9 @@ func (g *Governance) HandleVoters(ctx *gin.Context) {
 	}
 
 	q, params := builder.UsePagination(true).Run(`
-	select user_address, bond_staked, locked_until, delegated_power, votes, proposals, voting_power, has_active_delegation
-	from governance.voters
-	where bond_staked + voting_power > 0
-	order by voting_power desc
+	select proposal_id, creator, create_time
+	from governance.abrogation_proposals
+	order by proposal_id desc
 	$offset$ $limit$
 	`)
 
@@ -38,27 +37,25 @@ func (g *Governance) HandleVoters(ctx *gin.Context) {
 	}
 	defer rows.Close()
 
-	var voters []types.Voter
+	var list []types.AbrogationProposal
 	for rows.Next() {
-		var v types.Voter
+		var a types.AbrogationProposal
 
-		err := rows.Scan(&v.Address, &v.BondStaked, &v.LockedUntil, &v.DelegatedPower, &v.Votes, &v.Proposals, &v.VotingPower, &v.HasActiveDelegation)
+		err := rows.Scan(&a.ProposalID, &a.Creator, &a.CreateTime)
 		if err != nil {
 			response.Error(ctx, err)
 			return
 		}
 
-		voters = append(voters, v)
+		list = append(list, a)
 	}
 
-	q, params = builder.UsePagination(false).Run(`select count(*) from governance.voters where bond_staked + voting_power > 0`)
-
 	var count int
-	err = g.db.Connection().QueryRow(ctx, q, params...).Scan(&count)
+	err = g.db.Connection().QueryRow(ctx, `select count(*) from governance.abrogation_proposals`).Scan(&count)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	response.OKWithBlock(ctx, g.db, voters, response.Meta().Set("count", count))
+	response.OKWithBlock(ctx, g.db, list, response.Meta().Set("count", count))
 }

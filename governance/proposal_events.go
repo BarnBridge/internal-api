@@ -1,8 +1,6 @@
 package governance
 
 import (
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
@@ -12,8 +10,7 @@ import (
 )
 
 func (g *Governance) HandleProposalEvents(ctx *gin.Context) {
-	proposalIDString := ctx.Param("proposalID")
-	proposalID, err := strconv.ParseInt(proposalIDString, 10, 64)
+	proposalID, err := getProposalId(ctx)
 	if err != nil {
 		response.Error(ctx, errors.New("invalid proposalID"))
 		return
@@ -28,6 +25,7 @@ func (g *Governance) HandleProposalEvents(ctx *gin.Context) {
 		response.Error(ctx, err)
 		return
 	}
+	defer rows.Close()
 
 	var events []types.Event
 	for rows.Next() {
