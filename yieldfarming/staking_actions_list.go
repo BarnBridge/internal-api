@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
 )
 
 func (h *YieldFarming) StakingActionsList(ctx *gin.Context) {
@@ -74,30 +73,14 @@ func (h *YieldFarming) StakingActionsList(ctx *gin.Context) {
 
 	var stakingActions []types.StakingAction
 	for rows.Next() {
-		var (
-			user            string
-			token           string
-			amount          decimal.Decimal
-			transactionHash string
-			actionType      string
-			blockTimestamp  int64
-		)
-		err := rows.Scan(&transactionHash, &user, &token, &amount, &actionType, &blockTimestamp)
+		var sa types.StakingAction
+		err := rows.Scan(&sa.TransactionHash, &sa.UserAddress, &sa.TokenAddress, &sa.Amount, &sa.ActionType, &sa.BlockTimestamp)
 		if err != nil {
 			response.Error(ctx, err)
 			return
 		}
 
-		stakingAction := types.StakingAction{
-			UserAddress:     user,
-			TokenAddress:    token,
-			Amount:          amount,
-			TransactionHash: transactionHash,
-			ActionType:      actionType,
-			BlockTimestamp:  blockTimestamp,
-		}
-		stakingActions = append(stakingActions, stakingAction)
-
+		stakingActions = append(stakingActions, sa)
 	}
 
 	q, params = builder.UsePagination(false).Run(`select count(*) from yield_farming.transactions t $filters$`)
