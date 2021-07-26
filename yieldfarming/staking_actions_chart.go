@@ -1,23 +1,19 @@
 package yieldfarming
 
 import (
+	"strings"
+
 	"github.com/barnbridge/internal-api/response"
+	"github.com/barnbridge/internal-api/utils"
+	"github.com/barnbridge/internal-api/yieldfarming/types"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
 func (h *YieldFarming) StakingActionsChart(ctx *gin.Context) {
-
-
-	response.OKWithBlock(ctx, h.db, nil)
-}
-
-/*
-
-func (a *API) handleStakinsActionsChart(c *gin.Context) {
-	tokensAddress := strings.ToLower(c.DefaultQuery("tokenAddress", ""))
-
+	tokensAddress := strings.ToLower(ctx.DefaultQuery("tokenAddress", ""))
 	if tokensAddress == "" {
-		BadRequest(c, errors.New("tokenAddress required"))
+		response.BadRequest(ctx, errors.New("tokenAddress required"))
 		return
 	}
 
@@ -26,83 +22,50 @@ func (a *API) handleStakinsActionsChart(c *gin.Context) {
 	for i, token := range tokens {
 		t, err := utils.ValidateAccount(token)
 		if err != nil {
-			BadRequest(c, err)
+			response.BadRequest(ctx, err)
 			return
 		}
 		tokens[i] = t
 	}
 
-	startTsString := strings.ToLower(c.DefaultQuery("start", "-1"))
+	startTsString := strings.ToLower(ctx.DefaultQuery("start", "-1"))
 	startTs, err := validateTs(startTsString)
 	if err != nil {
-		BadRequest(c, err)
+		response.BadRequest(ctx, err)
 		return
 	}
 
-	endTsString := strings.ToLower(c.DefaultQuery("end", "-1"))
+	endTsString := strings.ToLower(ctx.DefaultQuery("end", "-1"))
 	endTs, err := validateTs(endTsString)
 	if err != nil {
-		BadRequest(c, err)
+		response.BadRequest(ctx, err)
 		return
 	}
 
-	scale := strings.ToLower(c.DefaultQuery("scale", "week"))
+	scale := strings.ToLower(ctx.DefaultQuery("scale", "week"))
 	if scale != "week" && scale != "day" {
-		BadRequest(c, errors.New("Wrong scale"))
+		response.BadRequest(ctx, errors.New("Wrong scale"))
 		return
 	}
 
 	charts := make(map[string]types.Chart)
 
+	query := `select * from yield_farming.yf_stats_by_token($1,$2,$3,$4) order by point`
 	for _, token := range tokens {
-		rows, err := a.db.Query(`select * from yf_stats_by_token($1,$2,$3,$4) order by point`, token, startTs.Unix(), endTs.Unix(), scale)
+		rows, err := h.db.Connection().Query(ctx, query, token, startTs.Unix(), endTs.Unix(), scale)
 		if err != nil {
-			Error(c, err)
+			response.Error(ctx, err)
 			return
 		}
 
 		chart, err := getChart(rows)
 		if err != nil {
-			Error(c, err)
+			response.Error(ctx, err)
 			return
 		}
 		charts[token] = *chart
 
 	}
 
-	OK(c, charts)
-	return
+	response.OK(ctx, charts)
 }
-
-func getChart(rows *sql.Rows) (*types.Chart, error) {
-	x := make(types.Chart)
-
-	for rows.Next() {
-		var t time.Time
-		var a types.Aggregate
-		err := rows.Scan(&t, &a.SumDeposits, &a.SumWithdrawals)
-		if err != nil {
-			return nil, err
-		}
-
-		x[t] = a
-	}
-	return &x, nil
-}
-
-func validateTs(ts string) (*time.Time, error) {
-	timestamp, err := strconv.ParseInt(ts, 0, 64)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid timestamp")
-	}
-
-	if timestamp == -1 {
-		return nil, errors.New("timestamp required")
-	}
-
-	tm := time.Unix(timestamp, 0)
-
-	return &tm, nil
-}
-
- */
