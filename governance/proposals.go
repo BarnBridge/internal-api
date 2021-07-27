@@ -13,17 +13,6 @@ import (
 
 func (g *Governance) HandleProposals(ctx *gin.Context) {
 	builder := query.New()
-	err := builder.SetLimitFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
-
-	err = builder.SetOffsetFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
 
 	title := ctx.DefaultQuery("title", "")
 	if title != "" {
@@ -44,7 +33,7 @@ func (g *Governance) HandleProposals(ctx *gin.Context) {
 		builder.Filters.Add("(select governance.proposal_state(proposal_id) )", states)
 	}
 
-	q, params := builder.Run(`
+	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 		select proposal_id,
 			   proposer,
 			   description,
@@ -93,7 +82,7 @@ func (g *Governance) HandleProposals(ctx *gin.Context) {
 		proposals = append(proposals, p)
 	}
 
-	q, params = builder.UsePagination(false).Run(`
+	q, params = builder.Run(`
 		select count(*) from governance.proposals
 		$filters$
 	`)

@@ -15,17 +15,6 @@ import (
 
 func (g *Governance) HandleTreasuryTxs(ctx *gin.Context) {
 	builder := query.New()
-	err := builder.SetLimitFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
-
-	err = builder.SetOffsetFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
 
 	treasuryAddress, err := utils.ValidateAccount(ctx.DefaultQuery("address", ""))
 	if err != nil {
@@ -44,7 +33,7 @@ func (g *Governance) HandleTreasuryTxs(ctx *gin.Context) {
 		builder.Filters.Add("tx_direction", txDirection)
 	}
 
-	q, params := builder.UsePagination(true).Run(`
+	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 		select t.token_address,
 			   t.account,
 			   t.counterparty,
@@ -84,7 +73,7 @@ func (g *Governance) HandleTreasuryTxs(ctx *gin.Context) {
 		list = append(list, t)
 	}
 
-	q, params = builder.UsePagination(false).Run(`select count(*) from account_erc20_transfers t $filters$`)
+	q, params = builder.Run(`select count(*) from account_erc20_transfers t $filters$`)
 
 	var count int
 	err = g.db.Connection().QueryRow(ctx, q, params...).Scan(&count)

@@ -11,19 +11,8 @@ import (
 
 func (g *Governance) HandleVoters(ctx *gin.Context) {
 	builder := query.New()
-	err := builder.SetLimitFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
 
-	err = builder.SetOffsetFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
-
-	q, params := builder.UsePagination(true).Run(`
+	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 	select user_address, bond_staked, locked_until, delegated_power, votes, proposals, voting_power, has_active_delegation
 	from governance.voters
 	where bond_staked + voting_power > 0
@@ -51,7 +40,7 @@ func (g *Governance) HandleVoters(ctx *gin.Context) {
 		voters = append(voters, v)
 	}
 
-	q, params = builder.UsePagination(false).Run(`select count(*) from governance.voters where bond_staked + voting_power > 0`)
+	q, params = builder.Run(`select count(*) from governance.voters where bond_staked + voting_power > 0`)
 
 	var count int
 	err = g.db.Connection().QueryRow(ctx, q, params...).Scan(&count)

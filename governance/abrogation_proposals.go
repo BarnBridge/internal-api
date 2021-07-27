@@ -11,19 +11,8 @@ import (
 
 func (g *Governance) HandleAbrogationProposals(ctx *gin.Context) {
 	builder := query.New()
-	err := builder.SetLimitFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
 
-	err = builder.SetOffsetFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
-
-	q, params := builder.UsePagination(true).Run(`
+	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 	select proposal_id, creator, create_time
 	from governance.abrogation_proposals
 	order by proposal_id desc
