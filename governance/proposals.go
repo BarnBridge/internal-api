@@ -33,7 +33,7 @@ func (g *Governance) HandleProposals(ctx *gin.Context) {
 		builder.Filters.Add("(select governance.proposal_state(proposal_id) )", states)
 	}
 
-	q, params := builder.Run(`
+	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 		select proposal_id,
 			   proposer,
 			   description,
