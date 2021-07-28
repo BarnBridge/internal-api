@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
-
 	"github.com/barnbridge/internal-api/utils"
+	"github.com/gin-gonic/gin"
 )
 
 type Builder struct {
 	Filters       *Filters
-	limit         *int64
-	offset        *int64
+	limit         int64
+	offset        int64
 	usePagination bool
 }
 
@@ -29,7 +27,7 @@ func (qb *Builder) SetLimitFromCtx(ctx *gin.Context) error {
 		return err
 	}
 
-	qb.limit = &limit
+	qb.limit = limit
 
 	return nil
 }
@@ -40,23 +38,61 @@ func (qb *Builder) SetOffsetFromCtx(ctx *gin.Context) error {
 		return err
 	}
 
-	if qb.limit == nil {
-		return errors.New("limit must be set first")
-	}
+	offset := (page - 1) * qb.limit
 
-	offset := (page - 1) * (*qb.limit)
-
-	qb.offset = &offset
+	qb.offset = offset
 
 	return nil
 }
 
 func (qb *Builder) SetLimit(limit int64) {
-	qb.limit = &limit
+	qb.limit = limit
 }
 
 func (qb *Builder) SetOffset(offset int64) {
-	qb.offset = &offset
+	qb.offset = offset
+}
+
+// returns a copy of the original query builder. chain and discard
+func (qb *Builder) WithPagination(offset int64, limit int64) *Builder {
+	nqb := *qb
+	nqb.usePagination = true
+	nqb.SetOffset(offset)
+	nqb.SetLimit(limit)
+	return &nqb
+}
+
+func (qb *Builder) WithPaginationFromCtx(ctx *gin.Context) *Builder {
+	limit, _ := utils.GetQueryLimit(ctx)
+
+	page, _ := utils.GetQueryPage(ctx)
+	offset := (page - 1) * qb.limit
+
+	nqb := qb.WithPagination(offset, limit)
+
+	return nqb
+}
+
+func (qb *Builder) Run(query string) (string, []interface{}) {
+	where, params := qb.buildWhere()
+
+	var offsetFilter, limitFilter string
+
+	if qb.usePagination {
+		// add offset
+		params = append(params, qb.offset)
+		offsetFilter = fmt.Sprintf("offset $%d", len(params))
+
+		// add limit
+		params = append(params, qb.limit)
+		limitFilter = fmt.Sprintf("limit $%d", len(params))
+	}
+
+	query = strings.Replace(query, FiltersIdentifier, where, 1)
+	query = strings.Replace(query, OffsetIdentifier, offsetFilter, 1)
+	query = strings.Replace(query, LimitIdentifier, limitFilter, 1)
+
+	return query, params
 }
 
 func (qb *Builder) buildWhere() (string, []interface{}) {
@@ -85,32 +121,4 @@ func (qb *Builder) buildWhere() (string, []interface{}) {
 	}
 
 	return where, params
-}
-
-func (qb *Builder) UsePagination(use bool) *Builder {
-	qb.usePagination = use
-
-	return qb
-}
-
-func (qb *Builder) Run(query string) (string, []interface{}) {
-	where, params := qb.buildWhere()
-
-	var offsetFilter, limitFilter string
-
-	if qb.usePagination {
-		// add offset
-		params = append(params, qb.offset)
-		offsetFilter = fmt.Sprintf("offset $%d", len(params))
-
-		// add limit
-		params = append(params, qb.limit)
-		limitFilter = fmt.Sprintf("limit $%d", len(params))
-	}
-
-	query = strings.Replace(query, FiltersIdentifier, where, 1)
-	query = strings.Replace(query, OffsetIdentifier, offsetFilter, 1)
-	query = strings.Replace(query, LimitIdentifier, limitFilter, 1)
-
-	return query, params
 }
