@@ -19,6 +19,12 @@ func (h *SmartYield) SetRoutes(engine *gin.Engine) {
 	sy.GET("/pools", h.Pools)
 	sy.GET("/pools/:address", h.PoolDetails)
 
+	sy.GET("/rewards/pools", h.RewardPools)
+	sy.GET("/rewards/pools/:poolAddress/transactions", h.RewardPoolsStakingActions)
+
+	sy.GET("/rewards/v2/pools", h.RewardPoolsV2)
+	sy.GET("/rewards/v2/pools/:poolAddress/transactions", h.RewardPoolsStakingActions)
+
 	// smartYield.GET("/pools/:address/apy", a.handlePoolAPYTrend)
 	// smartYield.GET("/pools/:address/liquidity", a.handlePoolLiquidity)
 	// smartYield.GET("/pools/:address/transactions", a.handlePoolTransactions)
@@ -30,11 +36,5 @@ func (h *SmartYield) SetRoutes(engine *gin.Engine) {
 	// smartYield.GET("/users/:address/portfolio-value", a.handleSYUserPortfolioValue)
 	// smartYield.GET("/users/:address/portfolio-value/junior", a.handleSYUserJuniorPortfolioValue)
 	// smartYield.GET("/users/:address/portfolio-value/senior", a.handleSYUserSeniorPortfolioValue)
-	// smartYield.GET("/rewards/pools", a.handleRewardPools)
-	// smartYield.GET("/rewards/pools/:poolAddress/transactions", a.handleRewardPoolsStakingActions)
-	// smartYield.GET("/rewards/v2/pools", a.handleRewardPoolsV2)
-	// smartYield.GET("/rewards/v2/pools/:poolAddress/transactions", a.handleRewardPoolsStakingActions)
 
 }
-
-
