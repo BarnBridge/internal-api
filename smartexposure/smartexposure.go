@@ -20,4 +20,5 @@ func (s *SmartExposure) SetRoutes(engine *gin.Engine) {
 	smartExposure.GET("/tranches/:eTokenAddress", s.handleTrancheDetails)
 	smartExposure.GET("/tranches/:eTokenAddress/etoken-price", s.handleETokenPrice)
 	smartExposure.GET("/tranches/:eTokenAddress/price-trend", s.handlePriceTrend)
+	smartExposure.GET("/tranches/:eTokenAddress/liquidity", s.handleTrancheLiquidity)
 }

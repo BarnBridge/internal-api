@@ -65,5 +65,5 @@ func (s *SmartExposure) handleETokenPrice(ctx *gin.Context) {
 		points = append(points, p)
 	}
 
-	response.OKWithBlock(ctx, s.db, points)
+	response.OK(ctx, points)
 }

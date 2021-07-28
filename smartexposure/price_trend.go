@@ -69,5 +69,5 @@ func (s *SmartExposure) handlePriceTrend(ctx *gin.Context) {
 		points = append(points, p)
 	}
 
-	response.OKWithBlock(ctx, s.db, points)
+	response.OK(ctx, points)
 }
