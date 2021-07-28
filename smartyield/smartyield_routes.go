@@ -17,8 +17,8 @@ func New(db *db.DB) *SmartYield {
 func (h *SmartYield) SetRoutes(engine *gin.Engine) {
 	sy := engine.Group("/api/smartyield")
 	sy.GET("/pools", h.Pools)
+	sy.GET("/pools/:address", h.PoolDetails)
 
-	// smartYield.GET("/pools/:address", a.handlePoolDetails)
 	// smartYield.GET("/pools/:address/apy", a.handlePoolAPYTrend)
 	// smartYield.GET("/pools/:address/liquidity", a.handlePoolLiquidity)
 	// smartYield.GET("/pools/:address/transactions", a.handlePoolTransactions)

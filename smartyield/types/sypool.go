@@ -9,7 +9,7 @@ type SYPool struct {
 	ControllerAddress  string `json:"controllerAddress"`
 	ModelAddress       string `json:"modelAddress"`
 	ProviderAddress    string `json:"providerAddress"`
-	SmartYieldAddress  string `json:"smartYieldAddress"`
+	PoolAddress        string `json:"smartYieldAddress"`
 	OracleAddress      string `json:"oracleAddress"`
 	JuniorBondAddress  string `json:"juniorBondAddress"`
 	SeniorBondAddress  string `json:"seniorBondAddress"`
