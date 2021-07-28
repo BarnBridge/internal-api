@@ -2,10 +2,10 @@ package governance
 
 import (
 	"context"
-	"database/sql"
 	"sort"
 	"time"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 
@@ -288,7 +288,7 @@ func (g *Governance) getProposalEvents(ctx context.Context, id uint64) ([]types.
 		       tx_hash
 		from governance.proposal_events 
 		where proposal_id = $1`, id)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != pgx.ErrNoRows {
 		return nil, errors.Wrap(err, "could not query proposal events")
 	}
 
