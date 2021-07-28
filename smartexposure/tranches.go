@@ -1,22 +1,32 @@
 package smartexposure
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v4"
+
 	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
 	"github.com/barnbridge/internal-api/smartexposure/types"
 	"github.com/barnbridge/internal-api/utils"
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v4"
 )
 
 func (s *SmartExposure) handleAllSEPoolsTranches(ctx *gin.Context) {
 	builder := query.New()
-
 	poolAddress := ctx.DefaultQuery("poolAddress", "")
 	if poolAddress != "" {
 		poolAddress, err := utils.ValidateAccount(poolAddress)
 		if err != nil {
 			response.Error(ctx, err)
+			return
+		}
+		err, exists := s.checkPoolExists(ctx, poolAddress)
+		if err != nil {
+			response.Error(ctx, err)
+			return
+		}
+
+		if !exists {
+			response.NotFound(ctx)
 			return
 		}
 
@@ -98,6 +108,17 @@ func (s *SmartExposure) handleTrancheDetails(ctx *gin.Context) {
 	eTokenAddress, err := utils.ValidateAccount(eTokenAddress)
 	if err != nil {
 		response.BadRequest(ctx, err)
+		return
+	}
+
+	err, exists := s.checkTrancheExists(ctx, eTokenAddress)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	if !exists {
+		response.NotFound(ctx)
 		return
 	}
 
