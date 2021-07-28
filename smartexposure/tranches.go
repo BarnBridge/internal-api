@@ -82,7 +82,7 @@ func (s *SmartExposure) handleAllSEPoolsTranches(ctx *gin.Context) {
                        token_b_current_ratio,
 					   included_in_block,
 					   to_timestamp(block_timestamp)
-				from smart_exposure.tranche_state
+				from smart_exposure.tranche_state t
 				$filters$
 				order by block_timestamp desc limit 1`)
 
@@ -104,7 +104,6 @@ func (s *SmartExposure) handleAllSEPoolsTranches(ctx *gin.Context) {
 
 func (s *SmartExposure) handleTrancheDetails(ctx *gin.Context) {
 	eTokenAddress := ctx.Param("eTokenAddress")
-
 	eTokenAddress, err := utils.ValidateAccount(eTokenAddress)
 	if err != nil {
 		response.BadRequest(ctx, err)
@@ -123,7 +122,6 @@ func (s *SmartExposure) handleTrancheDetails(ctx *gin.Context) {
 	}
 
 	var t types.Tranche
-
 	err = s.db.Connection().QueryRow(ctx, `select s_factor_e,
 					   target_ratio,
 					   token_a_ratio,

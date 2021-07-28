@@ -3,8 +3,9 @@ package types
 import (
 	"time"
 
-	"github.com/barnbridge/internal-api/types"
 	"github.com/shopspring/decimal"
+
+	"github.com/barnbridge/internal-api/types"
 )
 
 type Tranche struct {
@@ -22,8 +23,8 @@ type Tranche struct {
 	TokenA types.Token `json:"tokenA,omitempty"`
 	TokenB types.Token `json:"tokenB,omitempty"`
 
-	RebalancingInterval  decimal.Decimal `json:"rebalancingInterval,omitempty"`
-	RebalancingCondition decimal.Decimal `json:"rebalancingCondition,omitempty"`
+	RebalancingInterval  string `json:"rebalancingInterval,omitempty"`
+	RebalancingCondition string `json:"rebalancingCondition,omitempty"`
 
 	State TrancheState `json:"state,omitempty"`
 }
