@@ -38,7 +38,7 @@ func (s *SmartExposure) getPoolByETokenAddress(ctx context.Context, addr string)
 				   token_b_decimals,
 				   start_at_block
 			from smart_exposure.pools
-			where pool_address = (select pool_address from smart_exposure.tranches where etoken_address = $1)`, addr).Scan(&p.EPoolAddress, &p.ProtocolId, &p.TokenA.TokenAddress, &p.TokenA.TokenSymbol,
+			where pool_address = (select pool_address from smart_exposure.tranches where etoken_address = $1)`, addr).Scan(&p.PoolAddress, &p.PoolName, &p.TokenA.TokenAddress, &p.TokenA.TokenSymbol,
 		&p.TokenA.TokenDecimals, &p.TokenB.TokenAddress, &p.TokenB.TokenSymbol, &p.TokenB.TokenDecimals, &p.StartAtBlock)
 
 	return &p, err
@@ -77,4 +77,15 @@ func getStartDate(window string) (int64, error) {
 	}
 
 	return time.Now().Add(-duration).Unix(), nil
+}
+
+func checkTxType(action string) bool {
+	txType := [2]string{"DEPOSIT", "WITHDRAW"}
+	for _, tx := range txType {
+		if action == tx {
+			return true
+		}
+	}
+
+	return false
 }

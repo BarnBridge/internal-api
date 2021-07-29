@@ -7,6 +7,7 @@ import (
 	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
 	"github.com/barnbridge/internal-api/smartexposure/types"
+	globalTypes "github.com/barnbridge/internal-api/types"
 	"github.com/barnbridge/internal-api/utils"
 )
 
@@ -65,8 +66,10 @@ func (s *SmartExposure) handleAllSEPoolsTranches(ctx *gin.Context) {
 
 	for rows.Next() {
 		var t types.Tranche
+		var tokenAState, tokenBState globalTypes.TokenState
 		err = rows.Scan(&t.PoolAddress, &t.ETokenAddress, &t.ETokenSymbol, &t.SFactorE, &t.TargetRatio, &t.TokenARatio, &t.TokenBRatio, &t.TokenA.TokenAddress,
-			&t.TokenA.TokenDecimals, &t.TokenA.TokenSymbol, &t.TokenB.TokenAddress, &t.TokenB.TokenDecimals, &t.TokenB.TokenSymbol, &t.TokenA.State.Price, &t.TokenB.State.Price)
+			&t.TokenA.TokenDecimals, &t.TokenA.TokenSymbol, &t.TokenB.TokenAddress, &t.TokenB.TokenDecimals, &t.TokenB.TokenSymbol, &tokenAState.Price, &tokenBState.Price,
+		)
 		if err != nil {
 			response.Error(ctx, err)
 			return
@@ -91,10 +94,13 @@ func (s *SmartExposure) handleAllSEPoolsTranches(ctx *gin.Context) {
 			response.Error(ctx, err)
 			return
 		}
-		t.TokenA.State.BlockNumber = t.State.BlockNumber
-		t.TokenA.State.BlockTimestamp = t.State.BlockTimestamp.Unix()
-		t.TokenB.State.BlockNumber = t.State.BlockNumber
-		t.TokenB.State.BlockTimestamp = t.State.BlockTimestamp.Unix()
+		tokenAState.BlockNumber = t.State.BlockNumber
+		tokenAState.BlockTimestamp = t.State.BlockTimestamp.Unix()
+		tokenBState.BlockNumber = t.State.BlockNumber
+		tokenBState.BlockTimestamp = t.State.BlockTimestamp.Unix()
+
+		t.TokenA.State = &tokenAState
+		t.TokenB.State = &tokenBState
 
 		tranches = append(tranches, t)
 	}
@@ -122,6 +128,8 @@ func (s *SmartExposure) handleTrancheDetails(ctx *gin.Context) {
 	}
 
 	var t types.Tranche
+	var tokenAState, tokenBState globalTypes.TokenState
+
 	err = s.db.Connection().QueryRow(ctx, `select s_factor_e,
 					   target_ratio,
 					   token_a_ratio,
@@ -149,14 +157,15 @@ func (s *SmartExposure) handleTrancheDetails(ctx *gin.Context) {
 					   tranche_state_token_b_current_ratio,
 					   tranche_state_included_in_block,
 					   to_timestamp(tranche_state_block_timestamp) from smart_exposure.get_tranche_details($1)`, eTokenAddress).Scan(&t.SFactorE, &t.TargetRatio, &t.TokenARatio, &t.TokenA.TokenAddress, &t.TokenA.TokenSymbol,
-		&t.TokenA.TokenDecimals, &t.TokenA.State.Price, &t.TokenA.State.BlockNumber, &t.TokenA.State.BlockTimestamp, &t.TokenB.TokenAddress, &t.TokenB.State.Price, &t.TokenB.State.BlockNumber,
-		&t.TokenB.State.BlockTimestamp, &t.TokenBRatio, &t.TokenB.TokenSymbol, &t.TokenB.TokenDecimals, &t.RebalancingInterval, &t.RebalancingCondition, &t.State.LastRebalance, &t.State.TokenALiquidity,
+		&t.TokenA.TokenDecimals, &tokenAState.Price, &tokenAState.BlockNumber, &tokenAState.BlockTimestamp, &t.TokenB.TokenAddress, &tokenBState.Price, &tokenBState.BlockNumber,
+		&tokenBState.BlockTimestamp, &t.TokenBRatio, &t.TokenB.TokenSymbol, &t.TokenB.TokenDecimals, &t.RebalancingInterval, &t.RebalancingCondition, &t.State.LastRebalance, &t.State.TokenALiquidity,
 		&t.State.TokenBLiquidity, &t.State.ETokenPrice, &t.State.CurrentRatio, &t.State.TokenACurrentRatio, &t.State.TokenBCurrentRatio, &t.State.BlockNumber, &t.State.BlockTimestamp)
 
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
-
+	t.TokenA.State = &tokenAState
+	t.TokenB.State = &tokenBState
 	response.OKWithBlock(ctx, s.db, t)
 }

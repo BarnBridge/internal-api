@@ -54,9 +54,9 @@ func (s *SmartExposure) handleTrancheLiquidity(ctx *gin.Context) {
 		return
 	}
 
-	var points []types.SELiquidityPoint
+	var points []types.LiquidityPoint
 	for rows.Next() {
-		var p types.SELiquidityPoint
+		var p types.LiquidityPoint
 		err := rows.Scan(&p.Point, &p.TokenALiquidity, &p.TokenBLiquidity)
 		if err != nil {
 			response.NotFound(ctx)

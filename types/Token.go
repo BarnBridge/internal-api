@@ -5,14 +5,14 @@ import (
 )
 
 type Token struct {
-	TokenAddress  string `json:"tokenAddress"`
-	TokenSymbol   string `json:"tokenSymbol"`
-	TokenDecimals int64  `json:"tokenDecimals"`
-	State TokenState `json:"state,omitempty"`
+	TokenAddress  string      `json:"tokenAddress"`
+	TokenSymbol   string      `json:"tokenSymbol"`
+	TokenDecimals int64       `json:"tokenDecimals"`
+	State         *TokenState `json:"state,omitempty"`
 }
 
 type TokenState struct {
-	Price          decimal.Decimal `json:"price"`
-	BlockNumber    int64           `json:"blockNumber"`
-	BlockTimestamp int64           `json:"blockTimestamp"`
+	Price          decimal.Decimal `json:"price,omitempty"`
+	BlockNumber    int64           `json:"blockNumber,omitempty"`
+	BlockTimestamp int64           `json:"blockTimestamp,omitempty"`
 }

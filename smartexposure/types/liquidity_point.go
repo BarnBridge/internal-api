@@ -6,7 +6,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type SELiquidityPoint struct {
+type LiquidityPoint struct {
 	Point           time.Time       `json:"point"`
 	TokenALiquidity decimal.Decimal `json:"tokenALiquidity"`
 	TokenBLiquidity decimal.Decimal `json:"tokenBLiquidity"`
