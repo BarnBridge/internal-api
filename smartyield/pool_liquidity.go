@@ -30,14 +30,7 @@ func (h *SmartYield) PoolLiquidity(ctx *gin.Context) {
 		return
 	}
 
-	var underlyingDecimals int64
-	err = h.db.Connection().QueryRow(
-		ctx,
-		`	select underlying_decimals 
-					from smart_yield.pools p
-				where p.pool_address = $1`,
-		poolAddress,
-	).Scan(&underlyingDecimals)
+	underlyingDecimals, err := h.PoolUnderlyingDecimals(ctx, poolAddress)
 	if err != nil {
 		response.Error(ctx, errors.Wrap(err, "could not find smartyield pool"))
 		return

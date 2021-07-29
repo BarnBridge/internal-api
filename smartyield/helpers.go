@@ -1,6 +1,11 @@
 package smartyield
 
-import "github.com/pkg/errors"
+import (
+	"strings"
+
+	"github.com/barnbridge/internal-api/smartyield/types"
+	"github.com/pkg/errors"
+)
 
 func checkRewardPoolTxType(action string) bool {
 	txType := [2]string{"JUNIOR_STAKE", "JUNIOR_UNSTAKE"}
@@ -27,4 +32,16 @@ func validateWindow(window string) (string, string, error) {
 	}
 
 	return "", "", errors.New("invalid window")
+}
+
+func isSupportedTxType(t string) bool {
+	switch types.TxType(strings.ToUpper(t)) {
+	case types.JuniorDeposit, types.JuniorInstantWithdraw, types.JuniorRegularWithdraw,
+		types.JuniorRedeem, types.SeniorDeposit, types.SeniorRedeem, types.JtokenSend, types.JtokenReceive,
+		types.JbondSend, types.JbondReceive, types.SbondSend, types.SbondReceive,
+		types.JuniorStake, types.JuniorUnstake:
+		return true
+	}
+
+	return false
 }
