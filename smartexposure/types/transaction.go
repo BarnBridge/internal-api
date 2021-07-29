@@ -18,7 +18,6 @@ type Transaction struct {
 	TransactionHash string            `json:"transactionHash"`
 	BlockTimestamp  int64             `json:"blockTimestamp"`
 	BlockNumber     int64             `json:"blockNumber"`
-	SFactorE        decimal.Decimal   `json:"sFactorE"`
 	TokenAPrice     decimal.Decimal   `json:"tokenAPrice"`
 	TokenBPrice     decimal.Decimal   `json:"tokenBPrice"`
 	ETokenPrice     decimal.Decimal   `json:"eTokenPrice"`

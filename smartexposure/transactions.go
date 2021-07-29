@@ -105,30 +105,19 @@ func (s *SmartExposure) handleTransactions(ctx *gin.Context) {
 			   t.tx_hash,
 			   t.block_timestamp,
 			   t.included_in_block,
-			   coalesce((select price_usd
-						 from public.token_prices tp
-						 where token_address = (select token_a_address
-												from smart_exposure.pools
-												where pool_address = (select pool_address
-																	  from smart_exposure.tranches
-																	  where etoken_address = etoken_address))
-						   and tp.block_timestamp <= t.block_timestamp
-						 limit 1), 0)                                                                    as token_a_price,
-			   coalesce((select price_usd
-						 from public.token_prices tp
-						 where token_address = (select token_b_address
-												from smart_exposure.pools
-												where pool_address = (select pool_address
-																	  from smart_exposure.tranches
-																	  where etoken_address = etoken_address))
-						   and tp.block_timestamp <= t.block_timestamp
-						 limit 1), 0)                                                                    as token_b_price,
+			   coalesce((select public.token_usd_price_at_ts(p.token_a_address, t.block_timestamp)),
+						0)                                                                                       as token_a_price,
+			   coalesce((select public.token_usd_price_at_ts(p.token_b_address, t.block_timestamp)),
+						0)                                                                                       as token_b_price,
 			   coalesce((select etoken_price
 						 from smart_exposure.tranche_state ts
 						 where ts.etoken_address = t.etoken_address
 						   and ts.block_timestamp <= t.block_timestamp
-						 limit 1), 0)                                                                    as etoken_price,
-			   (select etoken_symbol from smart_exposure.tranches where etoken_address = etoken_address) as etoken_symbol
+						 limit 1),
+						0)                                                                                       as etoken_price,
+			   (select etoken_symbol
+				from smart_exposure.tranches
+				where etoken_address = etoken_address)                                                           as etoken_symbol
 		from smart_exposure.transaction_history t
 				 inner join smart_exposure.pools p on pool_address = (select pool_address
 																	  from smart_exposure.tranches

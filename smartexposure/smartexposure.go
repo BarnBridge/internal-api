@@ -27,4 +27,5 @@ func (s *SmartExposure) SetRoutes(engine *gin.Engine) {
 	smartExposure.GET("/tranches/:eTokenAddress/ratio-deviation", s.handleRatioDeviation)
 
 	smartExposure.GET("/transactions", s.handleTransactions)
+	smartExposure.GET("/users/:userAddress/portfolio-value", s.handleUserPortfolioValue)
 }
