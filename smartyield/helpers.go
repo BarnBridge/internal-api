@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/barnbridge/internal-api/smartyield/types"
+	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 )
 
@@ -44,4 +45,16 @@ func isSupportedTxType(t string) bool {
 	}
 
 	return false
+}
+
+func getSort(ctx *gin.Context, direction string) (string, error) {
+	sort := ctx.DefaultQuery("sort", "")
+
+	if sort != "maturityDate" && sort != "depositedAmount" && sort != "redeemableAmount" && sort != "" {
+		return "", errors.New("invalid sort")
+	} else if sort != "" {
+		return sort + " " + direction + ", ", nil
+	}
+
+	return "", nil
 }
