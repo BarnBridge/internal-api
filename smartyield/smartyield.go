@@ -26,7 +26,7 @@ func (h *SmartYield) SetRoutes(engine *gin.Engine) {
 	sy.GET("/rewards/v2/pools/:poolAddress/transactions", h.RewardPoolsStakingActions)
 
 	sy.GET("/pools/:address/apy", h.PoolAPYTrend)
-	// smartYield.GET("/pools/:address/liquidity", a.handlePoolLiquidity)
+	sy.GET("/pools/:address/liquidity", h.PoolLiquidity)
 	// smartYield.GET("/pools/:address/transactions", a.handlePoolTransactions)
 	// smartYield.GET("/pools/:address/senior-bonds", a.handlePoolSBonds)
 	// smartYield.GET("/pools/:address/junior-bonds", a.handlePoolJBonds)
