@@ -15,7 +15,7 @@ import (
 	"github.com/barnbridge/internal-api/utils"
 )
 
-func (h *SmartYield) PoolSeniorBonds(ctx *gin.Context) {
+func (h *SmartYield) PoolJuniorBonds(ctx *gin.Context) {
 	builder := query.New()
 
 	pool := ctx.Param("address")
@@ -41,7 +41,7 @@ func (h *SmartYield) PoolSeniorBonds(ctx *gin.Context) {
 		return
 	}
 
-	sort, err := getSortForSeniorBonds(ctx, sortDirection)
+	sort, err := getSortForJuniorBonds(ctx, sortDirection)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -50,13 +50,13 @@ func (h *SmartYield) PoolSeniorBonds(ctx *gin.Context) {
 	redeemed := strings.ToLower(ctx.DefaultQuery("redeemed", ""))
 	if redeemed == "true" {
 		builder.Filters.Add(
-			"(select count(*) from smart_yield.senior_redeem_events r where r.senior_bond_id = b.senior_bond_id and r.senior_bond_address = b.senior_bond_address)",
+			"(select count(*) from smart_yield.junior_2step_redeem_events r where r.junior_bond_id = b.junior_bond_id and r.junior_bond_address = b.junior_bond_address)",
 			"0",
 			">",
 		)
 	} else if redeemed == "false" {
 		builder.Filters.Add(
-			"(select count(*) from smart_yield.senior_redeem_events r where r.senior_bond_id = b.senior_bond_id and r.senior_bond_address = b.senior_bond_address)",
+			"(select count(*) from smart_yield.junior_2step_redeem_events r where r.junior_bond_id = b.junior_bond_id and r.junior_bond_address = b.junior_bond_address)",
 			"0",
 		)
 	} else if redeemed != "" {
@@ -65,25 +65,25 @@ func (h *SmartYield) PoolSeniorBonds(ctx *gin.Context) {
 	}
 
 	q := `select b.buyer_address,
-			   b.senior_bond_id,
-			   (b.block_timestamp + b.for_days * 24 * 60 * 60)           as maturityDate,
+			   b.junior_bond_id,
+			   tokens_in as depositedAmount,
+			   matures_at as maturityDate,
 			   (select count(*)
-				from smart_yield.senior_redeem_events r
-				where r.senior_bond_id = b.senior_bond_id
-				  and r.senior_bond_address = b.senior_bond_address) > 0 as redeemed,
-			   b.underlying_in 											 as depositedAmount,
-			   b.underlying_in + b.gain                                  as redeemableAmount,
+				from smart_yield.junior_2step_redeem_events r
+				where r.junior_bond_id = b.junior_bond_id
+				  and r.junior_bond_address = b.junior_bond_address) > 0 as redeemed,
 			   p.underlying_address,
 			   p.underlying_symbol,
 			   p.underlying_decimals,
 			   b.tx_hash,
 			   b.block_timestamp
-			from smart_yield.senior_entry_events b
-				 inner join smart_yield.pools p on b.pool_address = p.pool_address
+			from smart_yield.junior_2step_withdraw_events b
+				inner join smart_yield.pools p on b.pool_address = p.pool_address
 			$filters$
 		order by %s b.included_in_block desc, b.tx_index desc, b.log_index desc
 		$offset$ $limit$
 	`
+
 	q = fmt.Sprintf(q, sort)
 
 	query, params := builder.WithPaginationFromCtx(ctx).Run(q)
@@ -94,10 +94,10 @@ func (h *SmartYield) PoolSeniorBonds(ctx *gin.Context) {
 		return
 	}
 
-	var users []types.SeniorBondUser
+	var users []types.JuniorBondUser
 	for rows.Next() {
-		var u types.SeniorBondUser
-		err := rows.Scan(&u.AccountAddress, &u.SeniorBondId, &u.MaturityDate, &u.Redeemed, &u.DepositedAmount, &u.RedeemableAmount,
+		var u types.JuniorBondUser
+		err := rows.Scan(&u.AccountAddress, &u.JuniorBondId, &u.DepositedAmount, &u.MaturityDate, &u.Redeemed,
 			&u.UnderlyingTokenAddress, &u.UnderlyingTokenSymbol, &u.UnderlyingTokenDecimals,
 			&u.TxHash, &u.BlockTimestamp,
 		)
@@ -107,11 +107,11 @@ func (h *SmartYield) PoolSeniorBonds(ctx *gin.Context) {
 		}
 
 		u.DepositedAmount = u.DepositedAmount.DivRound(tenPowDec, int32(u.UnderlyingTokenDecimals))
-		u.RedeemableAmount = u.RedeemableAmount.DivRound(tenPowDec, int32(u.UnderlyingTokenDecimals))
+
 		users = append(users, u)
 	}
 
-	query, params = builder.Run(`select count(b.buyer_address) from smart_yield.senior_entry_events b $filters$`)
+	query, params = builder.Run(`select count(b.buyer_address) from smart_yield.junior_2step_withdraw_events b $filters$`)
 	var count int
 	err = h.db.Connection().QueryRow(ctx, query, params...).Scan(&count)
 	if err != nil {
