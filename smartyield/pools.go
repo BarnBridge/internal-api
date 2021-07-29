@@ -54,9 +54,9 @@ func (h *SmartYield) Pools(ctx *gin.Context) {
 
 	tenPow18 := decimal.NewFromInt(10).Pow(decimal.NewFromInt(18))
 
-	var pools []types.SYPool
+	var pools []types.Pool
 	for rows.Next() {
-		var p types.SYPool
+		var p types.Pool
 
 		err := rows.Scan(&p.ProtocolId, &p.PoolAddress, &p.ControllerAddress, &p.ModelAddress, &p.ProviderAddress, &p.OracleAddress, &p.JuniorBondAddress, &p.SeniorBondAddress, &p.CTokenAddress, &p.UnderlyingAddress, &p.UnderlyingSymbol, &p.UnderlyingDecimals, &p.RewardPoolAddress)
 		if err != nil {
@@ -64,7 +64,7 @@ func (h *SmartYield) Pools(ctx *gin.Context) {
 			return
 		}
 
-		var state types.SYPoolState
+		var state types.PoolState
 		err = h.db.Connection().QueryRow(ctx, `
 			select included_in_block,
 				   block_timestamp,
@@ -119,7 +119,7 @@ func (h *SmartYield) PoolDetails(ctx *gin.Context) {
 		return
 	}
 
-	var p types.SYPool
+	var p types.Pool
 
 	err = h.db.Connection().QueryRow(ctx, `
 		select protocol_id,
@@ -153,7 +153,7 @@ func (h *SmartYield) PoolDetails(ctx *gin.Context) {
 
 	tenPow18 := decimal.NewFromInt(10).Pow(decimal.NewFromInt(18))
 
-	var state types.SYPoolState
+	var state types.PoolState
 	err = h.db.Connection().QueryRow(ctx, `
 			select included_in_block,
 				   block_timestamp,

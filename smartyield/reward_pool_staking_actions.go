@@ -6,21 +6,13 @@ import (
 
 	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
+	"github.com/barnbridge/internal-api/smartyield/types"
 	"github.com/barnbridge/internal-api/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 )
-
-type rewardPoolSA struct {
-	UserAddress     string          `json:"userAddress"`
-	TransactionType string          `json:"transactionType"`
-	Amount          decimal.Decimal `json:"amount"`
-	BlockTimestamp  int64           `json:"blockTimestamp"`
-	BlockNumber     int64           `json:"blockNumber"`
-	TxHash          string          `json:"transactionHash"`
-}
 
 func (h *SmartYield) RewardPoolsStakingActions(ctx *gin.Context) {
 	builder := query.New()
@@ -80,7 +72,7 @@ func (h *SmartYield) RewardPoolsStakingActions(ctx *gin.Context) {
 				 log_index desc
 		$offset$ $limit$
 	`)
-	log.Println(query)
+
 	rows, err := h.db.Connection().Query(ctx, query, params...)
 	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
@@ -89,9 +81,9 @@ func (h *SmartYield) RewardPoolsStakingActions(ctx *gin.Context) {
 
 	tenPowDec := decimal.NewFromInt(10).Pow(decimal.NewFromInt(underlyingDecimals))
 
-	var transactions []rewardPoolSA
+	var transactions []types.StakingAction
 	for rows.Next() {
-		var t rewardPoolSA
+		var t types.StakingAction
 		err := rows.Scan(&t.UserAddress, &t.Amount, &t.TransactionType, &t.BlockTimestamp, &t.BlockNumber, &t.TxHash)
 		if err != nil {
 			response.Error(ctx, err)
