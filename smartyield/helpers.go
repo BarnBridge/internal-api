@@ -70,3 +70,12 @@ func getSortForJuniorBonds(ctx *gin.Context, direction string) (string, error) {
 
 	return "", nil
 }
+
+func isSupportedOriginator(originator string) bool {
+	switch strings.ToLower(originator) {
+	case "compound/v2":
+		return true
+	}
+
+	return false
+}
