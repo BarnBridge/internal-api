@@ -77,18 +77,6 @@ func (s *SmartExposure) handleTransactions(ctx *gin.Context) {
 		builder.Filters.Add("transaction_type", transactionType)
 	}
 
-	err := builder.SetLimitFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
-
-	err = builder.SetOffsetFromCtx(ctx)
-	if err != nil {
-		response.BadRequest(ctx, err)
-		return
-	}
-
 	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 		select t.etoken_address,
 			   t.user_address,

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
 
 	"github.com/barnbridge/internal-api/response"
@@ -43,7 +42,7 @@ func (s *SmartExposure) handleRatioDeviation(ctx *gin.Context) {
 		response.Error(ctx, err)
 		return
 	}
-	spew.Dump(startTs, dateTrunc)
+
 	rows, err := s.db.Connection().Query(ctx, `select point, abs(deviation) as deviation from smart_exposure.get_ratio_deviation($1,$2,$3)`, trancheAddress, startTs, dateTrunc)
 	if err != nil && err != sql.ErrNoRows {
 		response.Error(ctx, err)

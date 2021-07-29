@@ -1,76 +1,94 @@
 package smartexposure
 
 import (
+	"errors"
+	"fmt"
+	"strings"
+
 	"github.com/gin-gonic/gin"
+
+	"github.com/barnbridge/internal-api/response"
+	"github.com/barnbridge/internal-api/smartexposure/types"
+	"github.com/barnbridge/internal-api/utils"
 )
 
 func (s *SmartExposure) handleUserPortfolioValue(ctx *gin.Context) {
-	/*user, err := getQueryAddress(c, "userAddress")
+	user := ctx.Param("userAddress")
+	if user != "" {
+		var err error
+		user, err = utils.ValidateAccount(user)
 		if err != nil {
-			BadRequest(c, err)
+			response.BadRequest(ctx, errors.New("invalid accountAddress"))
+			return
+		}
+	}
+
+	window := strings.ToLower(ctx.DefaultQuery("window", "30d"))
+	totalPoints := getTotalPoints(window)
+	window, _, err := validateWindow(window)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	poolAddress := ctx.DefaultQuery("poolAddress", "all")
+	if poolAddress != "all" {
+		poolAddress, err = utils.ValidateAccount(poolAddress)
+		if err != nil {
+			response.Error(ctx, err)
+			return
+		}
+		err, exists := s.checkPoolExists(ctx, poolAddress)
+		if err != nil {
+			response.Error(ctx, err)
 			return
 		}
 
-		window := strings.ToLower(c.DefaultQuery("window", "30d"))
-		totalPoints := getTotalPoints(window)
-		window, _, err = validateWindow(window)
-		if err != nil {
-			Error(c, err)
+		if !exists {
+			response.NotFound(ctx)
 			return
 		}
+	}
 
-		poolAddress := strings.ToLower(c.DefaultQuery("poolAddress", "all"))
-		if poolAddress != "all" {
-			poolAddress, err = utils.ValidateAccount(poolAddress)
-			if err != nil {
-				Error(c, err)
-				return
-			}
-			if state.SEPoolByAddress(poolAddress) == nil {
-				BadRequest(c, errors.New("invalid pool address"))
-				return
-			}
-		}
+	var query string
+	var params []interface{}
+	params = append(params, user)
+	if poolAddress != "all" {
+		query = fmt.Sprintf(`select to_timestamp(ts),
+       coalesce (smart_exposure.user_portfolio_value_by_pool($1,ts,$2),0)
+from generate_series(( select extract(epoch from now() - interval %s)::bigint ),
+                     ( select extract(epoch from now()) )::bigint, %s) as ts order by ts;`, window, totalPoints)
+		params = append(params, poolAddress)
+	} else {
+		query = fmt.Sprintf(`select to_timestamp(ts),
+       coalesce (smart_exposure.user_portfolio_value($1,ts),0)
+from generate_series(( select extract(epoch from now() - interval %s)::bigint ),
+                     ( select extract(epoch from now()) )::bigint, %s) as ts order by ts;`, window, totalPoints)
+	}
 
-		var query string
-		var params []interface{}
-		params = append(params, user)
-		if poolAddress != "all" {
-			query = fmt.Sprintf(`select to_timestamp(ts),
-	       coalesce (se_user_portfolio_value_by_pool($1,ts,$2),0)
-	from generate_series(( select extract(epoch from now() - interval %s)::bigint ),
-	                     ( select extract(epoch from now()) )::bigint, %s) as ts order by ts;`, window, totalPoints)
-			params = append(params, poolAddress)
-		} else {
-			query = fmt.Sprintf(`select to_timestamp(ts),
-	       coalesce (se_user_portfolio_value($1,ts),0)
-	from generate_series(( select extract(epoch from now() - interval %s)::bigint ),
-	                     ( select extract(epoch from now()) )::bigint, %s) as ts order by ts;`, window, totalPoints)
-		}
+	//24h 30*60
+	//7d 3*60*60
+	//30d 12*60*60
+	var points []types.PortfolioValuePoint
 
-		//24h 30*60
-		//7d 3*60*60
-		//30d 12*60*60
-		var points []SEPortfolioValuePoint
+	rows, err := s.db.Connection().Query(ctx, query, params...)
 
-		rows, err := a.db.Query(query, params...)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
 
+	for rows.Next() {
+		var p types.PortfolioValuePoint
+		err := rows.Scan(&p.Point, &p.PortfolioValue)
 		if err != nil {
-			Error(c, err)
+			response.Error(ctx, err)
 			return
 		}
+		points = append(points, p)
+	}
 
-		for rows.Next() {
-			var p SEPortfolioValuePoint
-			err := rows.Scan(&p.Point, &p.PortfolioValueSE)
-			if err != nil {
-				Error(c, err)
-				return
-			}
-			points = append(points, p)
-		}
-
-		OK(c, points)*/
+	response.OK(ctx, points)
 
 }
 
