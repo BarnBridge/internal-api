@@ -37,10 +37,10 @@ func validateWindow(window string) (string, string, error) {
 
 func isSupportedTxType(t string) bool {
 	switch types.TxType(strings.ToUpper(t)) {
-	case types.JuniorDeposit, types.JuniorInstantWithdraw, types.JuniorRegularWithdraw,
-		types.JuniorRedeem, types.SeniorDeposit, types.SeniorRedeem, types.JtokenSend, types.JtokenReceive,
-		types.JbondSend, types.JbondReceive, types.SbondSend, types.SbondReceive,
-		types.JuniorStake, types.JuniorUnstake:
+	case types.TxJuniorDeposit, types.TxJuniorInstantWithdraw, types.TxJuniorRegularWithdraw,
+		types.TxJuniorRedeem, types.TxSeniorDeposit, types.TxSeniorRedeem, types.TxJtokenSend, types.TxJtokenReceive,
+		types.TxJbondSend, types.TxJbondReceive, types.TxSbondSend, types.TxSbondReceive,
+		types.TxJuniorStake, types.TxJuniorUnstake:
 		return true
 	}
 

@@ -58,22 +58,23 @@ func (h *SmartYield) UserTransactionHistory(ctx *gin.Context) {
 	}
 
 	query, params := builder.WithPaginationFromCtx(ctx).Run(`
-		select h.protocol_id,
-			   h.pool_address,
-			   underlying_token_address,
-               (select underlying_decimals from smart_yield.pools p where h.pool_address = p.pool_address) as underlying_token_decimals,
-               (select underlying_symbol from smart_yield.pools p where h.pool_address = p.pool_address) as underlying_token_symbol, 
-			   amount,
-			   tranche,
-			   transaction_type,
-			   tx_hash,
-			   block_timestamp,
-			   included_in_block
+		select 
+			h.protocol_id,
+			h.pool_address,
+			underlying_token_address,
+			(select underlying_decimals from smart_yield.pools p where h.pool_address = p.pool_address) as underlying_token_decimals,
+			(select underlying_symbol from smart_yield.pools p where h.pool_address = p.pool_address) as underlying_token_symbol, 
+			amount,
+			tranche,
+			transaction_type,
+			tx_hash,
+			block_timestamp,
+			included_in_block
 		from smart_yield.transaction_history h
-				$filters$
-				order by included_in_block desc, tx_index desc, log_index desc
-				$offset$ $limit$
-		`)
+		$filters$
+		order by included_in_block desc, tx_index desc, log_index desc
+		$offset$ $limit$
+	`)
 
 	rows, err := h.db.Connection().Query(ctx, query, params...)
 	if err != nil && err != pgx.ErrNoRows {
