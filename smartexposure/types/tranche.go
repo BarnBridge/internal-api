@@ -23,7 +23,7 @@ type Tranche struct {
 	TokenA types.Token `json:"tokenA,omitempty"`
 	TokenB types.Token `json:"tokenB,omitempty"`
 
-	RebalancingInterval  string `json:"rebalancingInterval,omitempty"`
+	RebalancingInterval  int64  `json:"rebalancingInterval,omitempty"`
 	RebalancingCondition string `json:"rebalancingCondition,omitempty"`
 
 	State TrancheState `json:"state,omitempty"`

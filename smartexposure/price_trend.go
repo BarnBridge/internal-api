@@ -11,7 +11,7 @@ import (
 	"github.com/barnbridge/internal-api/utils"
 )
 
-func (s *SmartExposure) handlePriceTrend(ctx *gin.Context) {
+func (s *SmartExposure) tokensPricesChart(ctx *gin.Context) {
 	tranche := ctx.Param("eTokenAddress")
 	trancheAddress, err := utils.ValidateAccount(tranche)
 	if err != nil {

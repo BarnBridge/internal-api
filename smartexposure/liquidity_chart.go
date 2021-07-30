@@ -12,7 +12,7 @@ import (
 	"github.com/barnbridge/internal-api/utils"
 )
 
-func (s *SmartExposure) handleTrancheLiquidity(ctx *gin.Context) {
+func (s *SmartExposure) trancheLiquidityChart(ctx *gin.Context) {
 	tranche := ctx.Param("eTokenAddress")
 	trancheAddress, err := utils.ValidateAccount(tranche)
 	if err != nil {

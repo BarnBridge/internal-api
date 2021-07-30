@@ -3,6 +3,7 @@ package smartexposure
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
+	"github.com/shopspring/decimal"
 
 	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
@@ -11,7 +12,7 @@ import (
 	"github.com/barnbridge/internal-api/utils"
 )
 
-func (s *SmartExposure) handleAllSEPoolsTranches(ctx *gin.Context) {
+func (s *SmartExposure) allTranches(ctx *gin.Context) {
 	builder := query.New()
 	poolAddress := ctx.DefaultQuery("poolAddress", "")
 	if poolAddress != "" {
@@ -48,8 +49,8 @@ func (s *SmartExposure) handleAllSEPoolsTranches(ctx *gin.Context) {
 			   p.token_b_address,
 			   p.token_b_decimals,
 			   p.token_b_symbol,
-			   coalesce((select price_usd from token_prices where token_address = p.token_a_address order by block_timestamp desc limit 1),0) as token_a_price,
-			   coalesce((select price_usd from token_prices where token_address = p.token_b_address order by block_timestamp desc limit 1),0) as token_b_price
+			   coalesce((select price from token_prices where token_address = p.token_a_address order by block_timestamp desc limit 1),0) as token_a_price,
+			   coalesce((select price from token_prices where token_address = p.token_b_address order by block_timestamp desc limit 1),0) as token_b_price
 		from smart_exposure.tranches t
 				 inner join smart_exposure.pools p on p.pool_address = t.pool_address
 		$filters$
@@ -108,7 +109,7 @@ func (s *SmartExposure) handleAllSEPoolsTranches(ctx *gin.Context) {
 	response.OKWithBlock(ctx, s.db, tranches)
 }
 
-func (s *SmartExposure) handleTrancheDetails(ctx *gin.Context) {
+func (s *SmartExposure) trancheDetails(ctx *gin.Context) {
 	eTokenAddress := ctx.Param("eTokenAddress")
 	eTokenAddress, err := utils.ValidateAccount(eTokenAddress)
 	if err != nil {
@@ -129,7 +130,7 @@ func (s *SmartExposure) handleTrancheDetails(ctx *gin.Context) {
 
 	var t types.Tranche
 	var tokenAState, tokenBState globalTypes.TokenState
-
+	var rebalancingCondition decimal.Decimal
 	err = s.db.Connection().QueryRow(ctx, `select s_factor_e,
 					   target_ratio,
 					   token_a_ratio,
@@ -158,7 +159,7 @@ func (s *SmartExposure) handleTrancheDetails(ctx *gin.Context) {
 					   tranche_state_included_in_block,
 					   to_timestamp(tranche_state_block_timestamp) from smart_exposure.get_tranche_details($1)`, eTokenAddress).Scan(&t.SFactorE, &t.TargetRatio, &t.TokenARatio, &t.TokenA.TokenAddress, &t.TokenA.TokenSymbol,
 		&t.TokenA.TokenDecimals, &tokenAState.Price, &tokenAState.BlockNumber, &tokenAState.BlockTimestamp, &t.TokenB.TokenAddress, &tokenBState.Price, &tokenBState.BlockNumber,
-		&tokenBState.BlockTimestamp, &t.TokenBRatio, &t.TokenB.TokenSymbol, &t.TokenB.TokenDecimals, &t.RebalancingInterval, &t.RebalancingCondition, &t.State.LastRebalance, &t.State.TokenALiquidity,
+		&tokenBState.BlockTimestamp, &t.TokenBRatio, &t.TokenB.TokenSymbol, &t.TokenB.TokenDecimals, &t.RebalancingInterval, &rebalancingCondition, &t.State.LastRebalance, &t.State.TokenALiquidity,
 		&t.State.TokenBLiquidity, &t.State.ETokenPrice, &t.State.CurrentRatio, &t.State.TokenACurrentRatio, &t.State.TokenBCurrentRatio, &t.State.BlockNumber, &t.State.BlockTimestamp)
 
 	if err != nil {
@@ -167,5 +168,6 @@ func (s *SmartExposure) handleTrancheDetails(ctx *gin.Context) {
 	}
 	t.TokenA.State = &tokenAState
 	t.TokenB.State = &tokenBState
+	t.RebalancingCondition = rebalancingCondition.String()
 	response.OKWithBlock(ctx, s.db, t)
 }

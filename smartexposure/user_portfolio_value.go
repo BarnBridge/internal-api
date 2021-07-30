@@ -12,7 +12,7 @@ import (
 	"github.com/barnbridge/internal-api/utils"
 )
 
-func (s *SmartExposure) handleUserPortfolioValue(ctx *gin.Context) {
+func (s *SmartExposure) userPortfolioValueChart(ctx *gin.Context) {
 	user := ctx.Param("userAddress")
 	if user != "" {
 		var err error

@@ -9,7 +9,7 @@ import (
 	"github.com/barnbridge/internal-api/utils"
 )
 
-func (s *SmartExposure) handleAllSEPools(ctx *gin.Context) {
+func (s *SmartExposure) sePools(ctx *gin.Context) {
 	rows, err := s.db.Connection().Query(ctx, `
 			select pool_address,
 				   pool_name,

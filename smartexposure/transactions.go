@@ -13,7 +13,7 @@ import (
 	"github.com/barnbridge/internal-api/utils"
 )
 
-func (s *SmartExposure) handleTransactions(ctx *gin.Context) {
+func (s *SmartExposure) transactions(ctx *gin.Context) {
 	builder := query.New()
 	poolAddress := ctx.DefaultQuery("poolAddress", "")
 	if poolAddress != "" {
