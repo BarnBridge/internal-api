@@ -61,6 +61,7 @@ func (h *SmartYield) UserTransactionHistory(ctx *gin.Context) {
 		select h.protocol_id,
 			   h.pool_address,
 			   underlying_token_address,
+               (select underlying_decimals from smart_yield.pools p where h.pool_address = p.pool_address) as underlying_token_decimals,
                (select underlying_symbol from smart_yield.pools p where h.pool_address = p.pool_address) as underlying_token_symbol, 
 			   amount,
 			   tranche,
@@ -83,21 +84,17 @@ func (h *SmartYield) UserTransactionHistory(ctx *gin.Context) {
 	var history []types.PoolHistory
 	for rows.Next() {
 		var hist types.PoolHistory
+		var underlyingDecimals int64
 
-		err := rows.Scan(&hist.ProtocolId, &hist.Pool, &hist.UnderlyingTokenAddress, &hist.UnderlyingTokenSymbol, &hist.Amount, &hist.Tranche, &hist.TransactionType, &hist.TransactionHash, &hist.BlockTimestamp, &hist.BlockNumber)
+		err := rows.Scan(&hist.ProtocolId, &hist.Pool, &hist.UnderlyingTokenAddress, &underlyingDecimals, &hist.UnderlyingTokenSymbol, &hist.Amount,
+			&hist.Tranche, &hist.TransactionType, &hist.TransactionHash, &hist.BlockTimestamp, &hist.BlockNumber,
+		)
 		if err != nil {
 			response.Error(ctx, err)
 			return
 		}
 
-		// NOTE find a better way than calling this each tx
-		underlyingDecimals, err := h.PoolUnderlyingDecimals(ctx, hist.Pool)
-		if err != nil {
-			response.Error(ctx, errors.Wrap(err, "could not find smartyield pool"))
-			return
-		}
 		tenPowDec := decimal.NewFromInt(10).Pow(decimal.NewFromInt(underlyingDecimals))
-
 		hist.Amount = hist.Amount.DivRound(tenPowDec, int32(underlyingDecimals))
 
 		history = append(history, hist)

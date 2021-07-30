@@ -37,18 +37,12 @@ func (h *SmartYield) PoolTransactions(ctx *gin.Context) {
 		builder.Filters.Add("transaction_type", txType)
 	}
 
-	underlyingDecimals, err := h.PoolUnderlyingDecimals(ctx, poolAddress)
-	if err != nil {
-		response.Error(ctx, errors.Wrap(err, "could not find smartyield pool"))
-		return
-	}
-	tenPowDec := decimal.NewFromInt(10).Pow(decimal.NewFromInt(underlyingDecimals))
-
 	query, params := builder.WithPaginationFromCtx(ctx).Run(`
 		select h.protocol_id,
 			   h.pool_address,
                user_address, 
 			   underlying_token_address,
+               (select underlying_decimals from smart_yield.pools p where h.pool_address = p.pool_address) as underlying_token_decimals, 
                (select underlying_symbol from smart_yield.pools p where h.pool_address = p.pool_address) as underlying_token_symbol, 
 			   amount,
 			   tranche,
@@ -71,18 +65,21 @@ func (h *SmartYield) PoolTransactions(ctx *gin.Context) {
 	var history []types.PoolHistory
 	for rows.Next() {
 		var ph types.PoolHistory
+		var underlyingDecimals int64
 		var userAddr string
 		err := rows.Scan(&ph.ProtocolId, &ph.Pool, &userAddr,
-			&ph.UnderlyingTokenAddress, &ph.UnderlyingTokenSymbol, &ph.Amount, &ph.Tranche,
+			&ph.UnderlyingTokenAddress, &underlyingDecimals, &ph.UnderlyingTokenSymbol, &ph.Amount, &ph.Tranche,
 			&ph.TransactionType, &ph.TransactionHash, &ph.BlockTimestamp, &ph.BlockNumber,
 		)
 		if err != nil {
 			response.Error(ctx, err)
 			return
 		}
-		ph.AccountAddress = &userAddr
 
+		ph.AccountAddress = &userAddr
+		tenPowDec := decimal.NewFromInt(10).Pow(decimal.NewFromInt(underlyingDecimals))
 		ph.Amount = ph.Amount.DivRound(tenPowDec, int32(underlyingDecimals))
+
 		history = append(history, ph)
 	}
 
