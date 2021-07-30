@@ -1,7 +1,6 @@
 package smartyield
 
 import (
-	"log"
 	"strings"
 
 	"github.com/barnbridge/internal-api/query"
@@ -19,7 +18,7 @@ func (h *SmartYield) RewardPoolsStakingActions(ctx *gin.Context) {
 
 	pool := ctx.Param("poolAddress")
 
-	poolAddress, err := utils.ValidateAccount(pool)
+	rewardPoolAddress, err := utils.ValidateAccount(pool)
 	if err != nil {
 		response.BadRequest(ctx, errors.New("invalid pool address"))
 		return
@@ -32,15 +31,14 @@ func (h *SmartYield) RewardPoolsStakingActions(ctx *gin.Context) {
 					from smart_yield.pools p inner join smart_yield.reward_pools rp
 						on p.pool_address = rp.pool_token_address
 				where rp.pool_address = $1`,
-		poolAddress,
+		rewardPoolAddress,
 	).Scan(&underlyingDecimals)
 	if err != nil {
 		response.Error(ctx, errors.Wrap(err, "could not find smartyield pool"))
 		return
 	}
-	log.Println(underlyingDecimals)
 
-	builder.Filters.Add("pool_address", poolAddress)
+	builder.Filters.Add("pool_address", rewardPoolAddress)
 
 	userAddress := ctx.DefaultQuery("userAddress", "all")
 	if userAddress != "all" {

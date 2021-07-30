@@ -26,15 +26,16 @@ func (h *SmartYield) SetRoutes(engine *gin.Engine) {
 	sy.GET("/rewards/v2/pools/:poolAddress/transactions", h.RewardPoolsStakingActions)
 
 	sy.GET("/pools/:address/apy", h.PoolAPYTrend)
-	// smartYield.GET("/pools/:address/liquidity", a.handlePoolLiquidity)
-	// smartYield.GET("/pools/:address/transactions", a.handlePoolTransactions)
-	// smartYield.GET("/pools/:address/senior-bonds", a.handlePoolSBonds)
-	// smartYield.GET("/pools/:address/junior-bonds", a.handlePoolJBonds)
-	// smartYield.GET("/users/:address/history", a.handleSYUserTransactionHistory)
-	// smartYield.GET("/users/:address/redeems/senior", a.handleSeniorRedeems)
-	// smartYield.GET("/users/:address/junior-past-positions", a.handleJuniorPastPositions)
-	// smartYield.GET("/users/:address/portfolio-value", a.handleSYUserPortfolioValue)
-	// smartYield.GET("/users/:address/portfolio-value/junior", a.handleSYUserJuniorPortfolioValue)
-	// smartYield.GET("/users/:address/portfolio-value/senior", a.handleSYUserSeniorPortfolioValue)
+	sy.GET("/pools/:address/liquidity", h.PoolLiquidity)
+	sy.GET("/pools/:address/transactions", h.PoolTransactions)
+	sy.GET("/pools/:address/senior-bonds", h.PoolSeniorBonds)
+	sy.GET("/pools/:address/junior-bonds", h.PoolJuniorBonds)
+
+	sy.GET("/users/:address/history", h.UserTransactionHistory)
+	sy.GET("/users/:address/redeems/senior", h.UserSeniorRedeems)
+	// sy.GET("/users/:address/junior-past-positions", h.JuniorPastPositions)
+	// sy.GET("/users/:address/portfolio-value", h.UserPortfolioValue)
+	// sy.GET("/users/:address/portfolio-value/junior", h.UserJuniorPortfolioValue)
+	// sy.GET("/users/:address/portfolio-value/senior", h.UserSeniorPortfolioValue)
 
 }
