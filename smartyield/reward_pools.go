@@ -47,7 +47,7 @@ func (h *SmartYield) RewardPools(ctx *gin.Context) {
 		$filters$
 		`)
 
-	var pools []types.SYRewardPool
+	var pools []types.RewardPool
 	rows, err := h.db.Connection().Query(ctx, query, params...)
 
 	if err != nil && err != pgx.ErrNoRows {
@@ -56,7 +56,7 @@ func (h *SmartYield) RewardPools(ctx *gin.Context) {
 	}
 
 	for rows.Next() {
-		var p types.SYRewardPool
+		var p types.RewardPool
 		var rewardTokens []string
 		err := rows.Scan(&p.PoolAddress, &p.PoolTokenAddress, &rewardTokens, &p.PoolTokenDecimals, &p.ProtocolID, &p.UnderlyingSymbol, &p.UnderlyingAddress)
 		if err != nil {
@@ -115,9 +115,9 @@ func (h *SmartYield) RewardPoolsV2(ctx *gin.Context) {
 		return
 	}
 
-	var pools []types.SYRewardPoolV2
+	var pools []types.RewardPoolV2
 	for rows.Next() {
-		var p types.SYRewardPoolV2
+		var p types.RewardPoolV2
 		var rewardTokens []string
 		err := rows.Scan(&p.PoolType, &p.PoolAddress, &p.PoolTokenAddress, &rewardTokens, &p.PoolTokenDecimals, &p.ProtocolID, &p.UnderlyingSymbol, &p.UnderlyingAddress, &p.PoolControllerAddress)
 		if err != nil {
@@ -139,7 +139,7 @@ func (h *SmartYield) RewardPoolsV2(ctx *gin.Context) {
 				return
 			}
 
-			p.RewardTokens = append(p.RewardTokens, types.SYRewardPoolV2RewardToken{
+			p.RewardTokens = append(p.RewardTokens, types.RewardPoolV2RewardToken{
 				Address:  t,
 				Symbol:   symbol,
 				Decimals: decimals,

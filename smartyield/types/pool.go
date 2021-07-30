@@ -4,7 +4,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-type SYPool struct {
+type Pool struct {
 	ProtocolId         string `json:"protocolId"`
 	ControllerAddress  string `json:"controllerAddress"`
 	ModelAddress       string `json:"modelAddress"`
@@ -19,10 +19,10 @@ type SYPool struct {
 	UnderlyingDecimals int64  `json:"underlyingDecimals"`
 	RewardPoolAddress  string `json:"rewardPoolAddress"`
 
-	State SYPoolState `json:"state"`
+	State PoolState `json:"state"`
 }
 
-type SYPoolState struct {
+type PoolState struct {
 	BlockNumber           int64           `json:"blockNumber"`
 	BlockTimestamp        uint64          `json:"blockTimestamp"`
 	SeniorLiquidity       decimal.Decimal `json:"seniorLiquidity"`
