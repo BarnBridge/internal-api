@@ -34,8 +34,7 @@ func (h *SmartYield) SetRoutes(engine *gin.Engine) {
 	sy.GET("/users/:address/history", h.UserTransactionHistory)
 	sy.GET("/users/:address/redeems/senior", h.UserSeniorRedeems)
 	sy.GET("/users/:address/junior-past-positions", h.JuniorPastPositions)
-	// sy.GET("/users/:address/portfolio-value", h.UserPortfolioValue)
-	// sy.GET("/users/:address/portfolio-value/junior", h.UserJuniorPortfolioValue)
-	// sy.GET("/users/:address/portfolio-value/senior", h.UserSeniorPortfolioValue)
-
+	sy.GET("/users/:address/portfolio-value", h.UserPortfolioValue)
+	sy.GET("/users/:address/portfolio-value/junior", h.UserJuniorPortfolioValue)
+	sy.GET("/users/:address/portfolio-value/senior", h.UserSeniorPortfolioValue)
 }
