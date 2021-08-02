@@ -22,7 +22,7 @@ func (h *SmartYield) UserPortfolioValue(ctx *gin.Context) {
 
 	rows, err := h.db.Connection().Query(ctx, `
 		select ts,
-		   public.junior_portfolio_value_at_ts($1, ts),
+		   smart_yield.junior_portfolio_value_at_ts($1, ts),
 		   smart_yield.senior_portfolio_value_at_ts($1, ts)
 		from 
 			generate_series(( select extract(epoch from now() - interval '30 days')::bigint ),
@@ -112,7 +112,7 @@ func (h *SmartYield) UserJuniorPortfolioValue(ctx *gin.Context) {
 
 	rows, err := h.db.Connection().Query(ctx, `
 		select ts,
-		   public.junior_portfolio_value_at_ts($1, ts)
+		   smart_yield.junior_portfolio_value_at_ts($1, ts)
 		from 
 			generate_series(( select extract(epoch from now() - interval '30 days')::bigint ),
 			(select extract(epoch from now()))::bigint, 12 * 60 * 60) as ts
