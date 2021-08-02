@@ -3,14 +3,15 @@ package smartyield
 import (
 	"strings"
 
-	"github.com/barnbridge/internal-api/query"
-	"github.com/barnbridge/internal-api/response"
-	"github.com/barnbridge/internal-api/smartyield/types"
-	"github.com/barnbridge/internal-api/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
+
+	"github.com/barnbridge/internal-api/query"
+	"github.com/barnbridge/internal-api/response"
+	"github.com/barnbridge/internal-api/smartyield/types"
+	"github.com/barnbridge/internal-api/utils"
 )
 
 func (h *SmartYield) Pools(ctx *gin.Context) {
@@ -25,7 +26,7 @@ func (h *SmartYield) Pools(ctx *gin.Context) {
 	}
 
 	if underlyingSymbol != "ALL" {
-		builder.Filters.Add("underlying_symbol", underlyingSymbol)
+		builder.Filters.Add("upper(underlying_symbol)", underlyingSymbol)
 	}
 
 	query, params := builder.Run(`

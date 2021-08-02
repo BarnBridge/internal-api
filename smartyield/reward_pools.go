@@ -3,12 +3,13 @@ package smartyield
 import (
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v4"
+
 	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
 	"github.com/barnbridge/internal-api/smartyield/types"
 	"github.com/barnbridge/internal-api/utils"
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v4"
 )
 
 func (h *SmartYield) RewardPools(ctx *gin.Context) {
@@ -25,7 +26,7 @@ func (h *SmartYield) RewardPools(ctx *gin.Context) {
 	}
 
 	if underlyingSymbol != "ALL" {
-		builder.Filters.Add("p.underlying_symbol", underlyingSymbol)
+		builder.Filters.Add("upper(p.underlying_symbol)", underlyingSymbol)
 	}
 
 	if underlyingAddress != "all" {
@@ -85,7 +86,7 @@ func (h *SmartYield) RewardPoolsV2(ctx *gin.Context) {
 	}
 
 	if underlyingSymbol != "ALL" {
-		builder.Filters.Add("p.underlying_symbol", underlyingSymbol)
+		builder.Filters.Add("upper(p.underlying_symbol)", underlyingSymbol)
 	}
 
 	if underlyingAddress != "all" {
