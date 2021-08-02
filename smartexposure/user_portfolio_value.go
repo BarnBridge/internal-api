@@ -69,7 +69,7 @@ from generate_series(( select extract(epoch from now() - interval %s)::bigint ),
 	//24h 30*60
 	//7d 3*60*60
 	//30d 12*60*60
-	var points []types.PortfolioValuePoint
+	var points []types.UserPortfolioValuePoint
 
 	rows, err := s.db.Connection().Query(ctx, query, params...)
 
@@ -79,7 +79,7 @@ from generate_series(( select extract(epoch from now() - interval %s)::bigint ),
 	}
 
 	for rows.Next() {
-		var p types.PortfolioValuePoint
+		var p types.UserPortfolioValuePoint
 		err := rows.Scan(&p.Point, &p.PortfolioValue)
 		if err != nil {
 			response.Error(ctx, err)

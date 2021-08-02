@@ -57,9 +57,9 @@ func (s *SmartExposure) tokensPricesChart(ctx *gin.Context) {
 		return
 	}
 
-	var points []types.PriceTrend
+	var points []types.PriceTrendPoint
 	for rows.Next() {
-		var p types.PriceTrend
+		var p types.PriceTrendPoint
 		err := rows.Scan(&p.Point, &p.TokenAPrice, &p.TokenBPrice)
 		if err != nil {
 			response.Error(ctx, err)

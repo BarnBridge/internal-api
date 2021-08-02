@@ -49,8 +49,8 @@ func (s *SmartExposure) allTranches(ctx *gin.Context) {
 			   p.token_b_address,
 			   p.token_b_decimals,
 			   p.token_b_symbol,
-			   coalesce((select price from token_prices where token_address = p.token_a_address order by block_timestamp desc limit 1),0) as token_a_price,
-			   coalesce((select price from token_prices where token_address = p.token_b_address order by block_timestamp desc limit 1),0) as token_b_price
+			   coalesce((select price from token_prices where token_address = p.token_a_address and quote = 'USD' order by block_timestamp desc limit 1),0) as token_a_price,
+			   coalesce((select price from token_prices where token_address = p.token_b_address and quote = 'USD'  order by block_timestamp desc limit 1),0) as token_b_price
 		from smart_exposure.tranches t
 				 inner join smart_exposure.pools p on p.pool_address = t.pool_address
 		$filters$
