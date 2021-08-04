@@ -79,7 +79,7 @@ func init() {
 	RootCmd.PersistentFlags().BoolVar(&verbose, "v", false, "Set all logging modules to debug (shorthand for `--logging=*=debug`)")
 	RootCmd.PersistentFlags().BoolVar(&vverbose, "vv", false, "Set all logging modules to trace (shorthand for `--logging=*=trace`)")
 
-	RootCmd.PersistentFlags().String("logging", "", "Display debug messages")
+	RootCmd.PersistentFlags().String("logging", "*=info", "Display debug messages")
 	viper.BindPFlag("logging", RootCmd.Flag("logging"))
 
 	// local flags;
