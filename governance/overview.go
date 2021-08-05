@@ -14,7 +14,7 @@ func (g *Governance) HandleOverview(ctx *gin.Context) {
 
 	batch.Queue(`select coalesce(avg(locked_until - block_timestamp),0)::bigint from governance.barn_locks;`)
 	batch.Queue(`select coalesce(sum(governance.voting_power(user_address)),0) as total_voting_power from governance.barn_users;`)
-	batch.Queue(`select count(*) from erc20_user_with_balance($1) where balance > 0;`, config.Store.Addresses.Bond)
+	batch.Queue(`select count(*) from erc20_users_with_balance($1) where balance > 0;`, config.Store.Addresses.Bond)
 	batch.Queue(`select count(*) from erc20_users_with_balance_excluded_transfers($1, $2) where balance > 0;`, config.Store.Addresses.Bond, config.Store.Addresses.ExcludeTransfers)
 	batch.Queue(`
     select coalesce(sum(total),0) 
