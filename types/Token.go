@@ -5,9 +5,9 @@ import (
 )
 
 type Token struct {
-	TokenAddress  string      `json:"tokenAddress"`
-	TokenSymbol   string      `json:"tokenSymbol"`
-	TokenDecimals int64       `json:"tokenDecimals"`
+	TokenAddress  string      `json:"address"`
+	TokenSymbol   string      `json:"symbol"`
+	TokenDecimals int64       `json:"decimals"`
 	State         *TokenState `json:"state,omitempty"`
 }
 
