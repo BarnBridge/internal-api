@@ -16,5 +16,12 @@ func New(db *db.DB) *SmartAlpha {
 
 func (s *SmartAlpha) SetRoutes(engine *gin.Engine) {
 	smartalpha := engine.Group("/api/smartalpha")
+
 	smartalpha.GET("/pools", s.Pools)
+	smartalpha.GET("/pools/:poolAddress/tokens-price-chart", s.TokensPriceChart)
+	smartalpha.GET("/pools/:poolAddress/pool-performance-chart", s.poolPerformanceChart)
+
+	smartalpha.GET("/users/:address/portfolio-value", s.UserPortfolioValue)
+
+	smartalpha.GET("/transactions", s.transactions)
 }
