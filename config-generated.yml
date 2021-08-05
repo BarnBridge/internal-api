@@ -11,22 +11,20 @@ api:
     # HTTP API port
     port: "3001"
 db:
-    # Auto run database migrations
-    automigrate: true
     # Database name
-    dbname: simulator
+    dbname: name
     # Database host
     host: localhost
-    # Database password
-    password: password
+    # Database password (also allowed via PG_PASSWORD env)
+    password: ""
     # Database port
     port: "5432"
     # Database sslmode
     sslmode: disable
-    # Database user
-    user: core
+    # Database user (also allowed via PG_USER env)
+    user: ""
 # Display debug messages
-logging: ""
+logging: '*=info'
 metrics:
     # Port on which to serve Prometheus metrics
     port: 9909

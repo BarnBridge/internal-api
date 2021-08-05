@@ -22,6 +22,13 @@ type ErrorLineExtract struct {
 	Text      string // Text of the line without a new line character.
 }
 
+// Ping verifies a connection to the database is still alive,
+// establishing a connection if necessary.
+func (db *DB) Ping(ctx context.Context) error {
+	return db.Connection().Ping(ctx)
+}
+
+
 // ExtractErrorLine takes source and character position extracts the line
 // number, column number, and the line of text.
 //

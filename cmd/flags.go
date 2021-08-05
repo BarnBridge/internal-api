@@ -7,10 +7,9 @@ func addDBFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().String("db.host", "localhost", "Database host")
 	cmd.PersistentFlags().String("db.port", "5432", "Database port")
 	cmd.PersistentFlags().String("db.sslmode", "disable", "Database sslmode")
-	cmd.PersistentFlags().String("db.dbname", "simulator", "Database name")
-	cmd.PersistentFlags().String("db.user", "core", "Database user")
-	cmd.PersistentFlags().String("db.password", "password", "Database password")
-	cmd.PersistentFlags().Bool("db.automigrate", true, "Auto run database migrations")
+	cmd.PersistentFlags().String("db.dbname", "name", "Database name")
+	cmd.PersistentFlags().String("db.user", "", "Database user (also allowed via PG_USER env)")
+	cmd.PersistentFlags().String("db.password", "", "Database password (also allowed via PG_PASSWORD env)")
 }
 
 func addAPIFlags(cmd *cobra.Command) {

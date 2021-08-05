@@ -11,6 +11,5 @@ type Pool struct {
 	TokenA globalTypes.Token `json:"tokenA"`
 	TokenB globalTypes.Token `json:"tokenB"`
 
-	StartAtBlock int64
-	State        PoolState `json:"state,omitempty"`
+	State PoolState `json:"state,omitempty"`
 }
