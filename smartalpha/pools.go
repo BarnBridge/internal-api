@@ -21,16 +21,6 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 			response.Error(ctx, err)
 			return
 		}
-		err, exists := s.checkPoolExists(ctx, poolAddress)
-		if err != nil {
-			response.Error(ctx, err)
-			return
-		}
-
-		if !exists {
-			response.NotFound(ctx)
-			return
-		}
 
 		builder.Filters.Add("p.pool_address", poolAddress)
 	}
