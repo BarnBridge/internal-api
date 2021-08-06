@@ -36,17 +36,9 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 						   p.oracle_address,
 						   p.oracle_asset_symbol,
 						   p.epoch1_start,
-						   p.epoch_duration,
-						   i.epoch_id,
-						   i.senior_liquidity,
-						   i.junior_liquidity,
-						   i.upside_exposure_rate,
-						   i.downside_protection_rate
+						   p.epoch_duration
 					from smart_alpha.pools p
-							 inner join smart_alpha.pool_epoch_info i on i.pool_address = p.pool_address
-					$filters$
-					order by epoch_id desc
-					limit 1`)
+					$filters$`)
 
 	rows, err := s.db.Connection().Query(ctx, q, params...)
 	if err != nil && err != pgx.ErrNoRows {
@@ -59,14 +51,34 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 
 	for rows.Next() {
 		var p types.Pool
-		err = rows.Scan(&p.PoolAddress, &p.PoolName, &p.PoolToken.TokenAddress, &p.PoolToken.TokenSymbol, &p.PoolToken.TokenDecimals, &p.JuniorTokenAddress,
-			&p.SeniorTokenAddress, &p.OracleAddress, &p.OracleAssetSymbol, &p.Epoch1Start, &p.EpochDuration, &p.State.Epoch, &p.State.SeniorLiquidity, &p.State.JuniorLiquidity,
-			&p.State.UpsideExposureRate, &p.State.DownsideProtectionRate)
 
+		err = rows.Scan(&p.PoolAddress, &p.PoolName, &p.PoolToken.Address, &p.PoolToken.Symbol, &p.PoolToken.Decimals, &p.JuniorTokenAddress,
+			&p.SeniorTokenAddress, &p.OracleAddress, &p.OracleAssetSymbol, &p.Epoch1Start, &p.EpochDuration)
 		if err != nil {
 			response.Error(ctx, err)
 			return
 		}
+
+		err = s.db.Connection().QueryRow(
+			ctx,
+			`
+			select epoch_id, senior_liquidity, junior_liquidity, upside_exposure_rate, downside_protection_rate
+			from smart_alpha.pool_epoch_info
+			where pool_address = $1
+			order by block_timestamp desc
+			limit 1;
+			`,
+			p.PoolAddress,
+		).Scan(
+			&p.State.Epoch,
+			&p.State.SeniorLiquidity,
+			&p.State.JuniorLiquidity,
+			&p.State.UpsideExposureRate,
+			&p.State.DownsideProtectionRate,
+		)
+
+		p.State.SeniorLiquidity = p.State.SeniorLiquidity.Shift(-int32(p.PoolToken.Decimals))
+		p.State.JuniorLiquidity = p.State.JuniorLiquidity.Shift(-int32(p.PoolToken.Decimals))
 
 		pools = append(pools, p)
 	}

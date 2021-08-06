@@ -30,7 +30,7 @@ func (g *Governance) HandleTreasuryTokens(ctx *gin.Context) {
 	var tokens []globalTypes.Token
 	for rows.Next() {
 		var t globalTypes.Token
-		err := rows.Scan(&t.TokenAddress, &t.TokenSymbol, &t.TokenDecimals)
+		err := rows.Scan(&t.Address, &t.Symbol, &t.Decimals)
 		if err != nil {
 			response.Error(ctx, err)
 			return

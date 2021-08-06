@@ -124,7 +124,7 @@ func (s *SmartExposure) transactions(ctx *gin.Context) {
 
 	for rows.Next() {
 		var h types.Transaction
-		err := rows.Scan(&h.ETokenAddress, &h.AccountAddress, &h.TokenA.TokenAddress, &h.TokenA.TokenSymbol, &h.TokenA.TokenDecimals, &h.TokenB.TokenAddress, &h.TokenB.TokenSymbol, &h.TokenB.TokenDecimals,
+		err := rows.Scan(&h.ETokenAddress, &h.AccountAddress, &h.TokenA.Address, &h.TokenA.Symbol, &h.TokenA.Decimals, &h.TokenB.Address, &h.TokenB.Symbol, &h.TokenB.Decimals,
 			&h.AmountA, &h.AmountB, &h.AmountEToken, &h.TransactionType, &h.TransactionHash, &h.BlockTimestamp, &h.BlockNumber, &h.TokenAPrice, &h.TokenBPrice, &h.ETokenPrice, &h.ETokenSymbol)
 		if err != nil {
 			response.Error(ctx, err)

@@ -37,8 +37,8 @@ func (s *SmartExposure) getPoolByETokenAddress(ctx context.Context, addr string)
 				   token_b_symbol,
 				   token_b_decimals
 			from smart_exposure.pools
-			where pool_address = (select pool_address from smart_exposure.tranches where etoken_address = $1)`, addr).Scan(&p.PoolAddress, &p.PoolName, &p.TokenA.TokenAddress, &p.TokenA.TokenSymbol,
-		&p.TokenA.TokenDecimals, &p.TokenB.TokenAddress, &p.TokenB.TokenSymbol, &p.TokenB.TokenDecimals)
+			where pool_address = (select pool_address from smart_exposure.tranches where etoken_address = $1)`, addr).Scan(&p.PoolAddress, &p.PoolName, &p.TokenA.Address, &p.TokenA.Symbol,
+		&p.TokenA.Decimals, &p.TokenB.Address, &p.TokenB.Symbol, &p.TokenB.Decimals)
 
 	return &p, err
 }
