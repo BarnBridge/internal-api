@@ -68,8 +68,8 @@ func (s *SmartExposure) allTranches(ctx *gin.Context) {
 	for rows.Next() {
 		var t types.Tranche
 		var tokenAState, tokenBState globalTypes.TokenState
-		err = rows.Scan(&t.PoolAddress, &t.ETokenAddress, &t.ETokenSymbol, &t.SFactorE, &t.TargetRatio, &t.TokenARatio, &t.TokenBRatio, &t.TokenA.TokenAddress,
-			&t.TokenA.TokenDecimals, &t.TokenA.TokenSymbol, &t.TokenB.TokenAddress, &t.TokenB.TokenDecimals, &t.TokenB.TokenSymbol, &tokenAState.Price, &tokenBState.Price,
+		err = rows.Scan(&t.PoolAddress, &t.ETokenAddress, &t.ETokenSymbol, &t.SFactorE, &t.TargetRatio, &t.TokenARatio, &t.TokenBRatio, &t.TokenA.Address,
+			&t.TokenA.Decimals, &t.TokenA.Symbol, &t.TokenB.Address, &t.TokenB.Decimals, &t.TokenB.Symbol, &tokenAState.Price, &tokenBState.Price,
 		)
 		if err != nil {
 			response.Error(ctx, err)
@@ -157,9 +157,9 @@ func (s *SmartExposure) trancheDetails(ctx *gin.Context) {
 					   tranche_state_token_a_current_ratio,
 					   tranche_state_token_b_current_ratio,
 					   tranche_state_included_in_block,
-					   to_timestamp(tranche_state_block_timestamp) from smart_exposure.get_tranche_details($1)`, eTokenAddress).Scan(&t.SFactorE, &t.TargetRatio, &t.TokenARatio, &t.TokenA.TokenAddress, &t.TokenA.TokenSymbol,
-		&t.TokenA.TokenDecimals, &tokenAState.Price, &tokenAState.BlockNumber, &tokenAState.BlockTimestamp, &t.TokenB.TokenAddress, &tokenBState.Price, &tokenBState.BlockNumber,
-		&tokenBState.BlockTimestamp, &t.TokenBRatio, &t.TokenB.TokenSymbol, &t.TokenB.TokenDecimals, &t.RebalancingInterval, &rebalancingCondition, &t.State.LastRebalance, &t.State.TokenALiquidity,
+					   to_timestamp(tranche_state_block_timestamp) from smart_exposure.get_tranche_details($1)`, eTokenAddress).Scan(&t.SFactorE, &t.TargetRatio, &t.TokenARatio, &t.TokenA.Address, &t.TokenA.Symbol,
+		&t.TokenA.Decimals, &tokenAState.Price, &tokenAState.BlockNumber, &tokenAState.BlockTimestamp, &t.TokenB.Address, &tokenBState.Price, &tokenBState.BlockNumber,
+		&tokenBState.BlockTimestamp, &t.TokenBRatio, &t.TokenB.Symbol, &t.TokenB.Decimals, &t.RebalancingInterval, &rebalancingCondition, &t.State.LastRebalance, &t.State.TokenALiquidity,
 		&t.State.TokenBLiquidity, &t.State.ETokenPrice, &t.State.CurrentRatio, &t.State.TokenACurrentRatio, &t.State.TokenBCurrentRatio, &t.State.BlockNumber, &t.State.BlockTimestamp)
 
 	if err != nil {

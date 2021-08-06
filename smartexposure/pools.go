@@ -30,16 +30,16 @@ func (s *SmartExposure) sePools(ctx *gin.Context) {
 
 	for rows.Next() {
 		var p types.Pool
-		err := rows.Scan(&p.PoolAddress, &p.PoolName, &p.TokenA.TokenAddress, &p.TokenA.TokenSymbol, &p.TokenA.TokenDecimals,
-			&p.TokenB.TokenAddress, &p.TokenB.TokenSymbol, &p.TokenB.TokenDecimals)
+		err := rows.Scan(&p.PoolAddress, &p.PoolName, &p.TokenA.Address, &p.TokenA.Symbol, &p.TokenA.Decimals,
+			&p.TokenB.Address, &p.TokenB.Symbol, &p.TokenB.Decimals)
 
 		if err != nil {
 			response.Error(ctx, err)
 			return
 		}
 		p.PoolAddress = utils.NormalizeAddress(p.PoolAddress)
-		p.TokenA.TokenAddress = utils.NormalizeAddress(p.TokenA.TokenAddress)
-		p.TokenB.TokenAddress = utils.NormalizeAddress(p.TokenB.TokenAddress)
+		p.TokenA.Address = utils.NormalizeAddress(p.TokenA.Address)
+		p.TokenB.Address = utils.NormalizeAddress(p.TokenB.Address)
 
 		var state types.PoolState
 		err = s.db.Connection().QueryRow(ctx,

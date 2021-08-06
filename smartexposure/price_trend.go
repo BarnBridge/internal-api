@@ -51,7 +51,7 @@ func (s *SmartExposure) tokensPricesChart(ctx *gin.Context) {
 	}
 
 	rows, err := s.db.Connection().Query(ctx, `select a.point, a.token_price as token_a_price,b.token_price as token_b_price from smart_exposure.get_token_price_chart($1,$3,$4) a
-									inner join smart_exposure.get_token_price_chart($2,$3,$4) b on a.point = b.point`, pool.TokenA.TokenAddress, pool.TokenB.TokenAddress, startTs, dateTrunc)
+									inner join smart_exposure.get_token_price_chart($2,$3,$4) b on a.point = b.point`, pool.TokenA.Address, pool.TokenB.Address, startTs, dateTrunc)
 	if err != nil && err != sql.ErrNoRows {
 		response.Error(ctx, err)
 		return
