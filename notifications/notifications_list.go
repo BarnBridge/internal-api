@@ -24,6 +24,8 @@ func (h *Notifications) NotificationsList(ctx *gin.Context) {
 
 	builder.Filters.Add("starts_on", timestamp, ">")
 	builder.Filters.AddRaw( "starts_on < extract(epoch from now())::bigint")
+	builder.Filters.AddRaw( "extract(epoch from now())::bigint < expires_on")
+
 
 	target := strings.ToLower(ctx.DefaultQuery("target", ""))
 	if target != "" {
