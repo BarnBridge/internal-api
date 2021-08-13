@@ -107,6 +107,11 @@ func (qb *Builder) buildWhere() (string, []interface{}) {
 				where += "where "
 			}
 
+			if filter.Where == "raw" {
+				where += fmt.Sprintf("%s", filter.Value)
+				continue
+			}
+
 			switch filter.Value.(type) {
 			case []string:
 				params = append(params, filter.Value)

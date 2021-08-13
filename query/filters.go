@@ -26,3 +26,16 @@ func (f *Filters) Add(key string, value interface{}, opts ...interface{}) *Filte
 
 	return f
 }
+
+
+func (f *Filters) AddRaw(cond string) *Filters {
+	var where = "raw"
+
+	*f = append(*f, Filter{
+		Key:   "",
+		Value: cond,
+		Where: where,
+	})
+
+	return f
+}
