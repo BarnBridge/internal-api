@@ -1,6 +1,7 @@
 package governance
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -51,7 +52,7 @@ func (g *Governance) HandleProposals(ctx *gin.Context) {
 		order by proposal_id desc
 		$offset$ $limit$
 	`)
-
+	fmt.Println(q, params)
 	rows, err := g.db.Connection().Query(ctx, q, params...)
 	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
@@ -76,7 +77,7 @@ func (g *Governance) HandleProposals(ctx *gin.Context) {
 			response.Error(ctx, err)
 			return
 		}
-
+		p.CreateTime = createTime
 		p.StateTimeLeft = getTimeLeft(p.State, createTime, warmUpDuration, activeDuration, queueDuration, gracePeriodDuration)
 
 		proposals = append(proposals, p)
