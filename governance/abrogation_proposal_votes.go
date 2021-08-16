@@ -65,7 +65,7 @@ func (g *Governance) HandleAbrogationProposalVotes(ctx *gin.Context) {
 
 	q, params = builder.Run(`
 	select count(*) from governance.abrogation_proposal_votes($param_overwrite$)
-	$filters
+	$filters$
 	`)
 
 	params = append(params, proposalID)
