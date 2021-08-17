@@ -76,7 +76,7 @@ func (g *Governance) HandleProposals(ctx *gin.Context) {
 			response.Error(ctx, err)
 			return
 		}
-
+		p.CreateTime = createTime
 		p.StateTimeLeft = getTimeLeft(p.State, createTime, warmUpDuration, activeDuration, queueDuration, gracePeriodDuration)
 
 		proposals = append(proposals, p)

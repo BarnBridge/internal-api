@@ -1,12 +1,14 @@
 package types
 
 import (
+	"time"
+
 	"github.com/shopspring/decimal"
 )
 
 type PoolState struct {
 	BlockNumber           int64           `json:"blockNumber"`
-	BlockTimestamp        uint64          `json:"blockTimestamp"`
+	BlockTimestamp        time.Time       `json:"blockTimestamp"`
 	SeniorLiquidity       decimal.Decimal `json:"seniorLiquidity"`
 	JuniorLiquidity       decimal.Decimal `json:"juniorLiquidity"`
 	JTokenPrice           decimal.Decimal `json:"jTokenPrice"`
