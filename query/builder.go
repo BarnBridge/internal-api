@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/barnbridge/internal-api/utils"
 	"github.com/gin-gonic/gin"
+
+	"github.com/barnbridge/internal-api/utils"
 )
 
 type Builder struct {
@@ -66,7 +67,7 @@ func (qb *Builder) WithPaginationFromCtx(ctx *gin.Context) *Builder {
 	limit, _ := utils.GetQueryLimit(ctx)
 
 	page, _ := utils.GetQueryPage(ctx)
-	offset := (page - 1) * qb.limit
+	offset := (page - 1) * limit
 
 	nqb := qb.WithPagination(offset, limit)
 
