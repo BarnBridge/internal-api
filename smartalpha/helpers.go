@@ -80,14 +80,14 @@ func getTxTokenPrice(txType string, poolTokenPrice, juniorTokenPrice, seniorToke
 		"SENIOR_ENTRY":             poolTokenPrice,
 		"JUNIOR_REDEEM_UNDERLYING": poolTokenPrice,
 		"SENIOR_REDEEM_UNDERLYING": poolTokenPrice,
-		"JUNIOR_EXIT":              juniorTokenPrice,
-		"JUNIOR_REDEEM_TOKENS":     juniorTokenPrice,
-		"JTOKEN_SEND":              juniorTokenPrice,
-		"JTOKEN_RECEIVE":           juniorTokenPrice,
-		"SENIOR_EXIT":              seniorTokenPrice,
-		"SENIOR_REDEEM_TOKENS":     seniorTokenPrice,
-		"STOKEN_SEND":              seniorTokenPrice,
-		"STOKEN_RECEIVE":           seniorTokenPrice,
+		"JUNIOR_EXIT":              juniorTokenPrice.Mul(poolTokenPrice),
+		"JUNIOR_REDEEM_TOKENS":     juniorTokenPrice.Mul(poolTokenPrice),
+		"JTOKEN_SEND":              juniorTokenPrice.Mul(poolTokenPrice),
+		"JTOKEN_RECEIVE":           juniorTokenPrice.Mul(poolTokenPrice),
+		"SENIOR_EXIT":              seniorTokenPrice.Mul(poolTokenPrice),
+		"SENIOR_REDEEM_TOKENS":     seniorTokenPrice.Mul(poolTokenPrice),
+		"STOKEN_SEND":              seniorTokenPrice.Mul(poolTokenPrice),
+		"STOKEN_RECEIVE":           seniorTokenPrice.Mul(poolTokenPrice),
 	}
 	return tokenActions[txType]
 }
