@@ -9,6 +9,8 @@ type Transaction struct {
 	UserAddress        string          `json:"userAddress"`
 	Tranche            string          `json:"tranche"`
 	TransactionType    string          `json:"transactionType"`
+	TokenSymbol        string          `json:"tokenSymbol"`
+	OracleAssetSymbol  string          `json:"oracleAssetSymbol"`
 	Amount             decimal.Decimal `json:"amount"`
 	AmountInQuoteAsset decimal.Decimal `json:"amountInQuoteAsset"`
 	AmountInUSD        decimal.Decimal `json:"amountInUSD"`

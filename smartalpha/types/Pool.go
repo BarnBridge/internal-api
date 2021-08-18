@@ -15,6 +15,9 @@ type Pool struct {
 	OracleAddress     string `json:"oracleAddress"`
 	OracleAssetSymbol string `json:"oracleAssetSymbol"`
 
+	SeniorRateModelAddress string `json:"seniorRateModelAddress"`
+	AccountingModelAddress string `json:"accountingModelAddress"`
+
 	Epoch1Start   int64 `json:"epoch1Start"`
 	EpochDuration int64 `json:"epochDuration"`
 
