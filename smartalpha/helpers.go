@@ -53,3 +53,21 @@ func getTotalPoints(window string) string {
 	}
 	return ""
 }
+
+func getTxTokenSymbol(txType, poolTokenSymbol, juniorTokenSymbol, seniorTokenSymbol string) string {
+	tokenActions := map[string]string{
+		"JUNIOR_ENTRY":             poolTokenSymbol,
+		"SENIOR_ENTRY":             poolTokenSymbol,
+		"JUNIOR_REDEEM_UNDERLYING": poolTokenSymbol,
+		"SENIOR_REDEEM_UNDERLYING": poolTokenSymbol,
+		"JUNIOR_EXIT":              juniorTokenSymbol,
+		"JUNIOR_REDEEM_TOKENS":     juniorTokenSymbol,
+		"JTOKEN_SEND":              juniorTokenSymbol,
+		"JTOKEN_RECEIVE":           juniorTokenSymbol,
+		"SENIOR_EXIT":              seniorTokenSymbol,
+		"SENIOR_REDEEM_TOKENS":     seniorTokenSymbol,
+		"STOKEN_SEND":              seniorTokenSymbol,
+		"STOKEN_RECEIVE":           seniorTokenSymbol,
+	}
+	return tokenActions[txType]
+}

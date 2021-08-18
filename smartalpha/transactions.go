@@ -92,6 +92,15 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 		h.AmountInUSD = h.AmountInUSD.Mul(h.Amount)
 		h.AmountInQuoteAsset = h.AmountInQuoteAsset.Mul(h.Amount)
 
+		var poolTokenSymbol, JuniorTokenSymbol, SeniorTokenSymbol string
+
+		err = s.db.Connection().QueryRow(ctx, "select pool_token_symbol,junior_token_symbol,senior_token_symbol  from smart_alpha.pools where pool_address = $1", h.PoolAddress).Scan(
+			&poolTokenSymbol, &JuniorTokenSymbol, &SeniorTokenSymbol)
+		if err != nil {
+			response.Error(ctx, err)
+			return
+		}
+		h.TokenSymbol = getTxTokenSymbol(h.TransactionType, poolTokenSymbol, JuniorTokenSymbol, SeniorTokenSymbol)
 		history = append(history, h)
 	}
 
