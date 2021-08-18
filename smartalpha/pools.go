@@ -35,6 +35,8 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 						   p.senior_token_address,
 						   p.oracle_address,
 						   p.oracle_asset_symbol,
+						   p.senior_rate_model_address,
+						   p.accounting_model_address,
 						   p.epoch1_start,
 						   p.epoch_duration
 					from smart_alpha.pools p
@@ -53,7 +55,7 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 		var p types.Pool
 
 		err = rows.Scan(&p.PoolAddress, &p.PoolName, &p.PoolToken.Address, &p.PoolToken.Symbol, &p.PoolToken.Decimals, &p.JuniorTokenAddress,
-			&p.SeniorTokenAddress, &p.OracleAddress, &p.OracleAssetSymbol, &p.Epoch1Start, &p.EpochDuration)
+			&p.SeniorTokenAddress, &p.OracleAddress, &p.OracleAssetSymbol, &p.SeniorRateModelAddress, &p.AccountingModelAddress, &p.Epoch1Start, &p.EpochDuration)
 		if err != nil {
 			response.Error(ctx, err)
 			return
