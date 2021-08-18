@@ -59,8 +59,14 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 													 from smart_alpha.pools p
 													 where p.pool_address = t.pool_address
 													 limit 1), t.block_timestamp)),
-			   pi.junior_token_price_start,
-			   pi.senior_token_price_start,
+			   (select junior_token_price_start
+				from smart_alpha.pool_epoch_info pi
+				where pi.block_timestamp <= t.block_timestamp
+				order by epoch_id desc limit 1),
+			   (select senior_token_price_start
+				from smart_alpha.pool_epoch_info pi
+				where pi.block_timestamp <= t.block_timestamp
+				order by epoch_id desc limit 1),
 			   (select token_usd_price_at_ts((select pool_token_address
 											  from smart_alpha.pools p
 											  where p.pool_address = t.pool_address
@@ -74,7 +80,6 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 			   p.senior_token_symbol
 		from smart_alpha.transaction_history t
 				 inner join smart_alpha.pools p on p.pool_address = t.pool_address
-				 inner join smart_alpha.pool_epoch_info pi on pi.pool_address = t.pool_address
 		$filters$
 		order by block_timestamp desc, tx_index desc, log_index desc
 		$offset$ $limit$
