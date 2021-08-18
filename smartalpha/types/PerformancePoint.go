@@ -12,4 +12,5 @@ type PerformancePoint struct {
 	SeniorWithoutSA decimal.Decimal `json:"seniorWithoutSA"`
 	JuniorWithSA    decimal.Decimal `json:"juniorWithSA"`
 	JuniorWithoutSA decimal.Decimal `json:"juniorWithoutSA"`
+	UnderlyingPrice decimal.Decimal `json:"underlyingPrice"`
 }
