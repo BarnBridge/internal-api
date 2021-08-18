@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
+	"github.com/shopspring/decimal"
 
 	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
@@ -58,6 +59,8 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 													 from smart_alpha.pools p
 													 where p.pool_address = t.pool_address
 													 limit 1), t.block_timestamp)),
+			   pi.junior_token_price_start,
+			   pi.senior_token_price_start,
 			   (select token_usd_price_at_ts((select pool_token_address
 											  from smart_alpha.pools p
 											  where p.pool_address = t.pool_address
@@ -71,6 +74,7 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 			   p.senior_token_symbol
 		from smart_alpha.transaction_history t
 				 inner join smart_alpha.pools p on p.pool_address = t.pool_address
+				 inner join smart_alpha.pool_epoch_info pi on pi.pool_address = t.pool_address
 		$filters$
 		order by block_timestamp desc, tx_index desc, log_index desc
 		$offset$ $limit$
@@ -86,18 +90,22 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 	for rows.Next() {
 		var h types.Transaction
 		var decimals int32
-		var poolTokenSymbol, JuniorTokenSymbol, SeniorTokenSymbol string
-		err := rows.Scan(&h.PoolAddress, &h.UserAddress, &h.Tranche, &h.TransactionType, &h.Amount, &h.AmountInQuoteAsset, &h.AmountInUSD, &h.BlockTimestamp, &h.TransactionHash, &decimals,
-			&h.OracleAssetSymbol, &poolTokenSymbol, &JuniorTokenSymbol, &SeniorTokenSymbol)
+		var poolTokenSymbol, juniorTokenSymbol, seniorTokenSymbol string
+		var poolTokenPrice, juniorTokenPrice, seniorTokenPrice decimal.Decimal
+		err := rows.Scan(&h.PoolAddress, &h.UserAddress, &h.Tranche, &h.TransactionType, &h.Amount, &poolTokenPrice, &juniorTokenPrice, &seniorTokenPrice, &h.AmountInUSD, &h.BlockTimestamp, &h.TransactionHash, &decimals,
+			&h.OracleAssetSymbol, &poolTokenSymbol, &juniorTokenSymbol, &seniorTokenSymbol)
 		if err != nil {
 			response.Error(ctx, err)
 			return
 		}
 
 		h.Amount = h.Amount.Shift(-decimals)
+		juniorTokenPrice = juniorTokenPrice.Shift(-18)
+		seniorTokenPrice = seniorTokenPrice.Shift(-18)
 		h.AmountInUSD = h.AmountInUSD.Mul(h.Amount)
+		h.TokenSymbol = getTxTokenSymbol(h.TransactionType, poolTokenSymbol, juniorTokenSymbol, seniorTokenSymbol)
+		h.AmountInQuoteAsset = getTxTokenPrice(h.TransactionType, poolTokenPrice, juniorTokenPrice, seniorTokenPrice)
 		h.AmountInQuoteAsset = h.AmountInQuoteAsset.Mul(h.Amount)
-		h.TokenSymbol = getTxTokenSymbol(h.TransactionType, poolTokenSymbol, JuniorTokenSymbol, SeniorTokenSymbol)
 		history = append(history, h)
 	}
 
