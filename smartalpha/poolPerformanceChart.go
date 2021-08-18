@@ -42,20 +42,19 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 	}
 
 	query := fmt.Sprintf(`
-				select to_timestamp(ts)                                                                                          as point,
-					   coalesce(senior_without_sa, 0)                                                                            as senior_without_sa,
-					   coalesce(senior_with_sa, 0)                                                                               as senior_with_sa,
-					   coalesce(junior_without_sa, 0)                                                                            as junior_without_sa,
-					   coalesce(junior_with_sa, 0)                                                                               as junior_with_sa,
-					   coalesce(token_price_at_ts(( select pool_token_address
-													from smart_alpha.pools
-													where pool_address = $1 ),
-												  ( select oracle_asset_symbol
-													from smart_alpha.pools
-													where pool_address = $1 ), ts),
-								0)                                                                                               as pool_token_price
+				select to_timestamp(ts)                                              as point,
+					   coalesce(senior_without_sa, 0)                                as senior_without_sa,
+					   coalesce(senior_with_sa, 0)                                   as senior_with_sa,
+					   coalesce(junior_without_sa, 0)                                as junior_without_sa,
+					   coalesce(junior_with_sa, 0)                                   as junior_with_sa,
+					   coalesce(token_price_at_ts((select pool_token_address
+												   from smart_alpha.pools
+												   where pool_address = $1),
+												  (select oracle_asset_symbol
+												   from smart_alpha.pools
+												   where pool_address = $1), ts), 0) as pool_token_price
 				from generate_series((select extract(epoch from now() - interval % s)::bigint),
-												 (select extract(epoch from now()))::bigint, %s) as ts
+									 (select extract(epoch from now()))::bigint, %s) as ts
 						 inner join smart_alpha.performance_at_ts($1, ts) on true
 				order by ts;`, window, totalPoints)
 
