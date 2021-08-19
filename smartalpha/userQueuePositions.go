@@ -51,14 +51,9 @@ func (s *SmartAlpha) UserQueuePositions(ctx *gin.Context) {
 		return
 	}
 
-	if err == sql.ErrNoRows {
-		response.NotFound(ctx)
-		return
-	}
-
 	defer rows.Close()
 
-	var userQueuePositions []types.UserQueuePosition
+	var userQueuePositions = make([]types.UserQueuePosition, 0)
 	for rows.Next() {
 		var u types.UserQueuePosition
 		err := rows.Scan(&u.PoolAddress, &u.PoolName, &u.PoolToken.Address, &u.PoolToken.Symbol, &u.PoolToken.Decimals, &u.OracleAssetSymbol, &u.Tranche, &u.BlockTimestamp, &u.QueueType)
