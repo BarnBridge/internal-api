@@ -63,6 +63,7 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 		response.Error(ctx, err)
 		return
 	}
+
 	var points []types.PerformancePoint
 
 	for rows.Next() {

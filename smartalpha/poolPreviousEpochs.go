@@ -73,7 +73,8 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		return
 	}
 	defer rows.Close()
-	var epochs []types.Epoch
+
+	var epochs = make([]types.Epoch, 0)
 
 	for rows.Next() {
 		var e types.Epoch
