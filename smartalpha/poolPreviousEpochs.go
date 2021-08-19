@@ -1,6 +1,8 @@
 package smartalpha
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
 
@@ -11,7 +13,6 @@ import (
 )
 
 func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
-	builder := query.New()
 	poolAddress := ctx.Param("poolAddress")
 	poolAddress, err := utils.ValidateAccount(poolAddress)
 	if err != nil {
@@ -31,26 +32,40 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		from smart_alpha.pools p
 		where p.pool_address = $1`, poolAddress).Scan(&poolEpochs.PoolAddress, &poolEpochs.PoolName, &poolEpochs.PoolToken.Address, &poolEpochs.PoolToken.Symbol,
 		&poolEpochs.PoolToken.Decimals, &poolEpochs.OracleAssetSymbol)
-	if err != nil {
+	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
 		return
 	}
 
+	if err == pgx.ErrNoRows {
+		response.NotFound(ctx)
+		return
+	}
+
+	builder := query.New()
 	builder.Filters.Add("p.pool_address", poolAddress)
+
 	q, params := builder.WithPaginationFromCtx(ctx).Run(`
-	select p.epoch_id,
-		   p.senior_liquidity,
-		   p.junior_liquidity,
-		   p.upside_exposure_rate,
-		   p.downside_protection_rate,
-		   p.epoch_entry_price,
-		   (select block_timestamp from smart_alpha.pool_epoch_info where pool_address = p.pool_address and epoch_id < p.epoch_id order by epoch_id desc limit 1),
-		   e.block_timestamp as end_date
-	from smart_alpha.pool_epoch_info p
-			 left join smart_alpha.epoch_end_events e on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id
-	$filters$
-	order by p.epoch_id desc
-	$offset$ $limit$`)
+		select p.epoch_id,
+			   p.senior_liquidity,
+			   p.junior_liquidity,
+			   p.upside_exposure_rate,
+			   p.downside_protection_rate,
+			   coalesce(p.epoch_entry_price, 0),
+			   ( select block_timestamp + 1
+				 from smart_alpha.epoch_end_events
+				 where pool_address = p.pool_address
+				   and epoch_id < p.epoch_id
+				 order by epoch_id desc
+				 limit 1 )       as start_date,
+			   e.block_timestamp as end_date
+		from smart_alpha.pool_epoch_info p
+				 left join smart_alpha.epoch_end_events e
+						   on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id 
+			$filters$
+			order by p.epoch_id desc
+			$offset$ $limit$
+	`)
 
 	rows, err := s.db.Connection().Query(ctx, q, params...)
 	if err != nil && err != pgx.ErrNoRows {
@@ -67,6 +82,15 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 			response.Error(ctx, err)
 			return
 		}
+
+		var priceDecimals int32
+		if strings.ToUpper(poolEpochs.OracleAssetSymbol) == "ETH" {
+			priceDecimals = 18
+		} else {
+			priceDecimals = 8
+		}
+
+		e.EntryPrice = e.EntryPrice.Shift(-priceDecimals)
 
 		epochs = append(epochs, e)
 	}
