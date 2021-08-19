@@ -24,7 +24,7 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 			return
 		}
 
-		builder.Filters.Add("pool_address", poolAddress)
+		builder.Filters.Add("t.pool_address", poolAddress)
 	}
 
 	accountAddress := strings.ToLower(ctx.DefaultQuery("userAddress", ""))
@@ -95,10 +95,10 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 	for rows.Next() {
 		var h types.Transaction
 		var decimals int32
-		var poolTokenSymbol, juniorTokenSymbol, seniorTokenSymbol string
+		var juniorTokenSymbol, seniorTokenSymbol string
 		var poolTokenPrice, juniorTokenPrice, seniorTokenPrice decimal.Decimal
 		err := rows.Scan(&h.PoolAddress, &h.UserAddress, &h.Tranche, &h.TransactionType, &h.Amount, &poolTokenPrice, &juniorTokenPrice, &seniorTokenPrice, &h.AmountInUSD, &h.BlockTimestamp, &h.TransactionHash, &decimals,
-			&h.OracleAssetSymbol, &poolTokenSymbol, &juniorTokenSymbol, &seniorTokenSymbol)
+			&h.OracleAssetSymbol, &h.PoolTokenSymbol, &juniorTokenSymbol, &seniorTokenSymbol)
 		if err != nil {
 			response.Error(ctx, err)
 			return
@@ -108,13 +108,13 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 		juniorTokenPrice = juniorTokenPrice.Shift(-18)
 		seniorTokenPrice = seniorTokenPrice.Shift(-18)
 		h.AmountInUSD = h.AmountInUSD.Mul(h.Amount)
-		h.TokenSymbol = getTxTokenSymbol(h.TransactionType, poolTokenSymbol, juniorTokenSymbol, seniorTokenSymbol)
+		h.TokenSymbol = getTxTokenSymbol(h.TransactionType, h.PoolTokenSymbol, juniorTokenSymbol, seniorTokenSymbol)
 		h.AmountInQuoteAsset = getTxTokenPrice(h.TransactionType, poolTokenPrice, juniorTokenPrice, seniorTokenPrice)
 		h.AmountInQuoteAsset = h.AmountInQuoteAsset.Mul(h.Amount)
 		history = append(history, h)
 	}
 
-	q, params = builder.Run(`select count(*) from smart_alpha.transaction_history $filters$`)
+	q, params = builder.Run(`select count(*) from smart_alpha.transaction_history t $filters$`)
 	var count int64
 
 	err = s.db.Connection().QueryRow(ctx, q, params...).Scan(&count)
