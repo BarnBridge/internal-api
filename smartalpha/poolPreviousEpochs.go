@@ -13,27 +13,15 @@ import (
 func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 	builder := query.New()
 	poolAddress := ctx.Param("poolAddress")
-	if poolAddress != "" {
-		poolAddress, err := utils.ValidateAccount(poolAddress)
-
-		if err != nil {
-			response.Error(ctx, err)
-			return
-		}
-		err, exists := s.checkPoolExists(ctx, poolAddress)
-		if err != nil {
-			response.Error(ctx, err)
-			return
-		}
-
-		if !exists {
-			response.NotFound(ctx)
-			return
-		}
+	poolAddress, err := utils.ValidateAccount(poolAddress)
+	if err != nil {
+		response.Error(ctx, err)
+		return
 	}
-	builder.Filters.Add("p.pool_address", poolAddress)
+
 	var poolEpochs types.PoolPreviousEpoch
-	q, params := builder.WithPaginationFromCtx(ctx).Run(`
+
+	err = s.db.Connection().QueryRow(ctx, `
 		select p.pool_address,
 			   p.pool_name,
 			   p.pool_token_address,
@@ -41,16 +29,15 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 			   p.pool_token_decimals,
 			   p.oracle_asset_symbol
 		from smart_alpha.pools p
-	$filters$
-	$offset$ $limit$ `)
-	err := s.db.Connection().QueryRow(ctx, q, params...).Scan(&poolEpochs.PoolAddress, &poolEpochs.PoolName, &poolEpochs.PoolToken.Address, &poolEpochs.PoolToken.Symbol,
+		where p.pool_address = $1`, poolAddress).Scan(&poolEpochs.PoolAddress, &poolEpochs.PoolName, &poolEpochs.PoolToken.Address, &poolEpochs.PoolToken.Symbol,
 		&poolEpochs.PoolToken.Decimals, &poolEpochs.OracleAssetSymbol)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	q, params = builder.WithPaginationFromCtx(ctx).Run(`
+	builder.Filters.Add("p.pool_address", poolAddress)
+	q, params := builder.WithPaginationFromCtx(ctx).Run(`
 	select p.epoch_id,
 		   p.senior_liquidity,
 		   p.junior_liquidity,
