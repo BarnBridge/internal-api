@@ -19,7 +19,7 @@ func (s *SmartAlpha) UserQueuePositions(ctx *gin.Context) {
 	}
 
 	rows, err := s.db.Connection().Query(ctx, `
-				select e.pool_address,
+				select distinct on (e.pool_address) e.pool_address,
 					   p.pool_name,
 					   p.pool_token_address,
 					   p.pool_token_symbol,
@@ -32,7 +32,7 @@ func (s *SmartAlpha) UserQueuePositions(ctx *gin.Context) {
 						 left join smart_alpha.pools p on e.pool_address = p.pool_address
 				where e.user_address = $1 and (select count(*) from smart_alpha.user_redeem_tokens_events re  where re.pool_address = e.pool_address and e.epoch_id = re.epoch_id) = 0
 				union
-				select x.pool_address,
+				select distinct on(x.pool_address) x.pool_address,
 					   p2.pool_name,
 					   p2.pool_token_address,
 					   p2.pool_token_symbol,
