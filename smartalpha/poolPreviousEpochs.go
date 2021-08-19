@@ -51,17 +51,19 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 	}
 
 	q, params = builder.WithPaginationFromCtx(ctx).Run(`
-	select epoch_id,
-       senior_liquidity,
-       junior_liquidity,
-       upside_exposure_rate,
-       downside_protection_rate,
-       block_timestamp,
-       (smart_alpha.get_epoch_end_date($1,epoch_id,block_timestamp))
-	from smart_alpha.pool_epoch_info
+	select p.epoch_id,
+		   p.senior_liquidity,
+		   p.junior_liquidity,
+		   p.upside_exposure_rate,
+		   p.downside_protection_rate,
+		   p.epoch_entry_price,
+		   (select block_timestamp from smart_alpha.pool_epoch_info where pool_address = p.pool_address and epoch_id < p.epoch_id order by epoch_id desc limit 1),
+		   e.block_timestamp as end_date
+	from smart_alpha.pool_epoch_info p
+			 left join smart_alpha.epoch_end_events e on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id
 	$filters$
-	order by epoch_id desc
-	$offset$ $limit$ `)
+	order by p.epoch_id desc
+	$offset$ $limit$`)
 
 	rows, err := s.db.Connection().Query(ctx, q, params...)
 	if err != nil && err != pgx.ErrNoRows {
@@ -73,7 +75,7 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 
 	for rows.Next() {
 		var e types.Epoch
-		err := rows.Scan(&e.Id, &e.SeniorLiquidity, &e.JuniorLiquidity, &e.UpsideExposureRate, &e.DownsideProtectionRate, &e.StartDate, &e.EndDate)
+		err := rows.Scan(&e.Id, &e.SeniorLiquidity, &e.JuniorLiquidity, &e.UpsideExposureRate, &e.DownsideProtectionRate, &e.EntryPrice, &e.StartDate, &e.EndDate)
 		if err != nil {
 			response.Error(ctx, err)
 			return

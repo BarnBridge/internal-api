@@ -5,9 +5,9 @@ import (
 )
 
 type PoolPreviousEpoch struct {
-	PoolAddress       string `json:"poolAddress"`
-	PoolName          string `json:"poolName"`
-	PoolToken         types.Token
-	OracleAssetSymbol string  `json:"oracleAssetSymbol"`
-	Epochs            []Epoch `json:"epochs"`
+	PoolAddress       string      `json:"poolAddress"`
+	PoolName          string      `json:"poolName"`
+	PoolToken         types.Token `json:"poolToken"`
+	OracleAssetSymbol string      `json:"oracleAssetSymbol"`
+	Epochs            []Epoch     `json:"epochs"`
 }

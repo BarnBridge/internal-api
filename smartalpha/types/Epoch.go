@@ -10,7 +10,7 @@ type Epoch struct {
 	JuniorLiquidity        decimal.Decimal `json:"juniorLiquidity"`
 	UpsideExposureRate     decimal.Decimal `json:"upsideExposureRate"`
 	DownsideProtectionRate decimal.Decimal `json:"downsideProtectionRate"`
-	StartDate              int64           `json:"startDate"`
-	EndDate                int64           `json:"endDate"`
+	StartDate              *int64          `json:"startDate"`
+	EndDate                *int64          `json:"endDate"`
 	EntryPrice             decimal.Decimal `json:"entryPrice"`
 }
