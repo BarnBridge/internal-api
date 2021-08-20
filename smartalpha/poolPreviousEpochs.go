@@ -58,7 +58,11 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 				   and epoch_id < p.epoch_id
 				 order by epoch_id desc
 				 limit 1 )       as start_date,
-			   e.block_timestamp as end_date
+			   e.block_timestamp as end_date,
+	           e.junior_profits,
+	           e.senior_profits,
+	           p.junior_token_price_start,
+	           p.senior_token_price_start
 		from smart_alpha.pool_epoch_info p
 				 left join smart_alpha.epoch_end_events e
 						   on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id 
@@ -78,7 +82,14 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 
 	for rows.Next() {
 		var e types.Epoch
-		err := rows.Scan(&e.Id, &e.SeniorLiquidity, &e.JuniorLiquidity, &e.UpsideExposureRate, &e.DownsideProtectionRate, &e.EntryPrice, &e.StartDate, &e.EndDate)
+		err := rows.Scan(&e.Id,
+			&e.SeniorLiquidity, &e.JuniorLiquidity,
+			&e.UpsideExposureRate, &e.DownsideProtectionRate,
+			&e.EntryPrice,
+			&e.StartDate, &e.EndDate,
+			&e.JuniorProfits, &e.SeniorProfits,
+			&e.JuniorTokenPriceStart, &e.SeniorTokenPriceStart,
+		)
 		if err != nil {
 			response.Error(ctx, err)
 			return
@@ -91,6 +102,18 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 			priceDecimals = 8
 		}
 
+		e.SeniorLiquidity = e.SeniorLiquidity.Shift(-int32(poolEpochs.PoolToken.Decimals))
+		e.JuniorLiquidity = e.JuniorLiquidity.Shift(-int32(poolEpochs.PoolToken.Decimals))
+		if e.JuniorProfits != nil {
+			scaled := e.JuniorProfits.Shift(-int32(poolEpochs.PoolToken.Decimals))
+			e.JuniorProfits = &scaled
+		}
+		if e.SeniorProfits != nil {
+			scaled := e.SeniorProfits.Shift(-int32(poolEpochs.PoolToken.Decimals))
+			e.SeniorProfits = &scaled
+		}
+		e.JuniorTokenPriceStart = e.JuniorTokenPriceStart.Shift(-18)
+		e.SeniorTokenPriceStart = e.SeniorTokenPriceStart.Shift(-18)
 		e.EntryPrice = e.EntryPrice.Shift(-priceDecimals)
 
 		epochs = append(epochs, e)
