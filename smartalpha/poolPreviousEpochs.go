@@ -64,7 +64,7 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 	           p.junior_token_price_start,
 	           p.senior_token_price_start
 		from smart_alpha.pool_epoch_info p
-				 left join smart_alpha.epoch_end_events e
+				 inner join smart_alpha.epoch_end_events e
 						   on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id 
 			$filters$
 			order by p.epoch_id desc
