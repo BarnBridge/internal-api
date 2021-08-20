@@ -104,14 +104,8 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 
 		e.SeniorLiquidity = e.SeniorLiquidity.Shift(-int32(poolEpochs.PoolToken.Decimals))
 		e.JuniorLiquidity = e.JuniorLiquidity.Shift(-int32(poolEpochs.PoolToken.Decimals))
-		if e.JuniorProfits != nil {
-			scaled := e.JuniorProfits.Shift(-int32(poolEpochs.PoolToken.Decimals))
-			e.JuniorProfits = &scaled
-		}
-		if e.SeniorProfits != nil {
-			scaled := e.SeniorProfits.Shift(-int32(poolEpochs.PoolToken.Decimals))
-			e.SeniorProfits = &scaled
-		}
+		e.JuniorProfits = e.JuniorProfits.Shift(-int32(poolEpochs.PoolToken.Decimals))
+		e.SeniorProfits = e.SeniorProfits.Shift(-int32(poolEpochs.PoolToken.Decimals))
 		e.JuniorTokenPriceStart = e.JuniorTokenPriceStart.Shift(-18)
 		e.SeniorTokenPriceStart = e.SeniorTokenPriceStart.Shift(-18)
 		e.EntryPrice = e.EntryPrice.Shift(-priceDecimals)
