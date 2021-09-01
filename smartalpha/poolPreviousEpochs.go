@@ -115,5 +115,20 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 
 	poolEpochs.Epochs = epochs
 
-	response.OKWithBlock(ctx, s.db, poolEpochs, response.Meta().Set("count", len(poolEpochs.Epochs)))
+	q, params = builder.Run(`
+		select count(*)
+		from smart_alpha.pool_epoch_info p
+				 inner join smart_alpha.epoch_end_events e
+						   on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id 
+			$filters$
+	`)
+	var count int64
+
+	err = s.db.Connection().QueryRow(ctx, q, params...).Scan(&count)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.OKWithBlock(ctx, s.db, poolEpochs, response.Meta().Set("count", count))
 }
