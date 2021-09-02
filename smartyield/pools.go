@@ -157,7 +157,7 @@ func (h *SmartYield) PoolDetails(ctx *gin.Context) {
 	var state types.PoolState
 	err = h.db.Connection().QueryRow(ctx, `
 			select included_in_block,
-				   block_timestamp,
+				   to_timestamp(block_timestamp),
 				   senior_liquidity,
 				   junior_liquidity,
 				   jtoken_price,
