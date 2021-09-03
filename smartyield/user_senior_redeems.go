@@ -35,7 +35,7 @@ func (h *SmartYield) UserSeniorRedeems(ctx *gin.Context) {
 			return
 		}
 
-		builder.Filters.Add("protocol_id", originator)
+		builder.Filters.Add("(select protocol_id from smart_yield.pools p where p.pool_address = r.pool_address)", originator)
 	}
 
 	token := strings.ToLower(ctx.DefaultQuery("token", "all"))
