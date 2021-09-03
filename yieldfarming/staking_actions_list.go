@@ -3,13 +3,14 @@ package yieldfarming
 import (
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v4"
+	"github.com/pkg/errors"
+
 	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
 	"github.com/barnbridge/internal-api/utils"
 	"github.com/barnbridge/internal-api/yieldfarming/types"
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v4"
-	"github.com/pkg/errors"
 )
 
 func (h *YieldFarming) StakingActionsList(ctx *gin.Context) {
@@ -37,7 +38,7 @@ func (h *YieldFarming) StakingActionsList(ctx *gin.Context) {
 
 	tokenAddress := strings.ToLower(ctx.DefaultQuery("tokenAddress", "all"))
 	if tokenAddress != "all" {
-		builder.Filters.Add("t.token_address", tokenAddress)
+		builder.Filters.Add("token_address", tokenAddress)
 	}
 
 	q, params := builder.WithPaginationFromCtx(ctx).Run(`
@@ -82,4 +83,3 @@ func (h *YieldFarming) StakingActionsList(ctx *gin.Context) {
 
 	response.OKWithBlock(ctx, h.db, stakingActions, response.Meta().Set("count", count))
 }
-
