@@ -73,7 +73,13 @@ func getSortForJuniorBonds(ctx *gin.Context, direction string) (string, error) {
 
 func isSupportedOriginator(originator string) bool {
 	switch strings.ToLower(originator) {
+
+	// TODO this should be dynamic
 	case "compound/v2":
+		return true
+	case "cream/v2":
+		return true
+	case "aave/v2":
 		return true
 	}
 
