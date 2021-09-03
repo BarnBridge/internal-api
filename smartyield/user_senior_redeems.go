@@ -46,7 +46,7 @@ func (h *SmartYield) UserSeniorRedeems(ctx *gin.Context) {
 			return
 		}
 
-		builder.Filters.Add("(select underlying_address from smart_yield.pools p where p.senior_bond_address = r.senior_bond_address)", tokenAddress)
+		builder.Filters.Add("(select underlying_address from smart_yield.pools p where p.pool_address = r.pool_address)", tokenAddress)
 	}
 
 	query, params := builder.WithPaginationFromCtx(ctx).Run(`
