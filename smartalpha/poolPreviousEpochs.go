@@ -1,12 +1,15 @@
 package smartalpha
 
 import (
+	"fmt"
+	"math"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
+	"github.com/pkg/errors"
 
-	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
 	"github.com/barnbridge/internal-api/smartalpha/types"
 	"github.com/barnbridge/internal-api/utils"
@@ -20,8 +23,35 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		return
 	}
 
-	var poolEpochs types.PoolPreviousEpoch
+	cursorStr := ctx.DefaultQuery("cursor", "-2")
+	cursor, err := strconv.ParseInt(cursorStr, 0, 64)
+	if err != nil {
+		response.Error(ctx, errors.New("invalid parameter 'cursor'"))
+		return
+	}
+	if cursor < 0 {
+		cursor = math.MaxInt32
+	}
 
+	limit, err := utils.GetQueryLimit(ctx)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	var dirOperator string
+	direction := strings.ToLower(ctx.DefaultQuery("direction", "down"))
+	switch direction {
+	case "up":
+		dirOperator = ">="
+	case "down":
+		dirOperator = "<="
+	default:
+		response.Error(ctx, errors.New("invalid parameter 'direction'"))
+		return
+	}
+
+	var pool types.PoolDetails
 	err = s.db.Connection().QueryRow(ctx, `
 		select p.pool_address,
 			   p.pool_name,
@@ -30,22 +60,18 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 			   p.pool_token_decimals,
 			   p.oracle_asset_symbol
 		from smart_alpha.pools p
-		where p.pool_address = $1`, poolAddress).Scan(&poolEpochs.PoolAddress, &poolEpochs.PoolName, &poolEpochs.PoolToken.Address, &poolEpochs.PoolToken.Symbol,
-		&poolEpochs.PoolToken.Decimals, &poolEpochs.OracleAssetSymbol)
+		where p.pool_address = $1`, poolAddress).Scan(&pool.PoolAddress, &pool.PoolName, &pool.PoolToken.Address, &pool.PoolToken.Symbol,
+		&pool.PoolToken.Decimals, &pool.OracleAssetSymbol)
 	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
 		return
-	}
-
-	if err == pgx.ErrNoRows {
+	} else if err == pgx.ErrNoRows {
 		response.NotFound(ctx)
 		return
 	}
 
-	builder := query.New()
-	builder.Filters.Add("p.pool_address", poolAddress)
-
-	q, params := builder.WithPaginationFromCtx(ctx).Run(`
+	rows, err := s.db.Connection().Query(ctx,
+		fmt.Sprintf(`
 		select p.epoch_id,
 			   p.senior_liquidity,
 			   p.junior_liquidity,
@@ -66,12 +92,10 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		from smart_alpha.pool_epoch_info p
 				 inner join smart_alpha.epoch_end_events e
 						   on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id 
-			$filters$
+			where p.pool_address = $1 and p.epoch_id %s $2
 			order by p.epoch_id desc
-			$offset$ $limit$
-	`)
-
-	rows, err := s.db.Connection().Query(ctx, q, params...)
+			limit $3
+	`, dirOperator), poolAddress, cursor, limit)
 	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
 		return
@@ -96,16 +120,16 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		}
 
 		var priceDecimals int32
-		if strings.ToUpper(poolEpochs.OracleAssetSymbol) == "ETH" {
+		if strings.ToUpper(pool.OracleAssetSymbol) == "ETH" {
 			priceDecimals = 18
 		} else {
 			priceDecimals = 8
 		}
 
-		e.SeniorLiquidity = e.SeniorLiquidity.Shift(-int32(poolEpochs.PoolToken.Decimals))
-		e.JuniorLiquidity = e.JuniorLiquidity.Shift(-int32(poolEpochs.PoolToken.Decimals))
-		e.JuniorProfits = e.JuniorProfits.Shift(-int32(poolEpochs.PoolToken.Decimals))
-		e.SeniorProfits = e.SeniorProfits.Shift(-int32(poolEpochs.PoolToken.Decimals))
+		e.SeniorLiquidity = e.SeniorLiquidity.Shift(-int32(pool.PoolToken.Decimals))
+		e.JuniorLiquidity = e.JuniorLiquidity.Shift(-int32(pool.PoolToken.Decimals))
+		e.JuniorProfits = e.JuniorProfits.Shift(-int32(pool.PoolToken.Decimals))
+		e.SeniorProfits = e.SeniorProfits.Shift(-int32(pool.PoolToken.Decimals))
 		e.JuniorTokenPriceStart = e.JuniorTokenPriceStart.Shift(-18)
 		e.SeniorTokenPriceStart = e.SeniorTokenPriceStart.Shift(-18)
 		e.EntryPrice = e.EntryPrice.Shift(-priceDecimals)
@@ -113,22 +137,5 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		epochs = append(epochs, e)
 	}
 
-	poolEpochs.Epochs = epochs
-
-	q, params = builder.Run(`
-		select count(*)
-		from smart_alpha.pool_epoch_info p
-				 inner join smart_alpha.epoch_end_events e
-						   on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id 
-			$filters$
-	`)
-	var count int64
-
-	err = s.db.Connection().QueryRow(ctx, q, params...).Scan(&count)
-	if err != nil {
-		response.Error(ctx, err)
-		return
-	}
-
-	response.OKWithBlock(ctx, s.db, poolEpochs, response.Meta().Set("count", count))
+	response.OKWithBlock(ctx, s.db, epochs)
 }
