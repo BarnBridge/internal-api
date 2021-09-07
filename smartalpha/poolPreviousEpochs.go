@@ -29,7 +29,7 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		response.Error(ctx, errors.New("invalid parameter 'cursor'"))
 		return
 	}
-	if cursor == -2 {
+	if cursor < 0 {
 		cursor = math.MaxInt32
 	}
 
