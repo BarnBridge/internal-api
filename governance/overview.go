@@ -7,6 +7,7 @@ import (
 	"github.com/barnbridge/internal-api/config"
 	"github.com/barnbridge/internal-api/governance/types"
 	"github.com/barnbridge/internal-api/response"
+	"github.com/barnbridge/internal-api/utils"
 )
 
 func (g *Governance) HandleOverview(ctx *gin.Context) {
@@ -14,8 +15,8 @@ func (g *Governance) HandleOverview(ctx *gin.Context) {
 
 	batch.Queue(`select coalesce(avg(locked_until - block_timestamp),0)::bigint from governance.barn_locks;`)
 	batch.Queue(`select coalesce(sum(governance.voting_power(user_address)),0) as total_voting_power from governance.barn_users;`)
-	batch.Queue(`select count(*) from erc20_users_with_balance($1) where balance > 0;`, config.Store.Addresses.Bond)
-	batch.Queue(`select count(*) from erc20_users_with_balance_excluded_transfers($1, $2) where balance > 0;`, config.Store.Addresses.Bond, config.Store.Addresses.ExcludeTransfers)
+	batch.Queue(`select count(*) from erc20_users_with_balance($1) where balance > 0;`, utils.NormalizeAddress(config.Store.Addresses.Bond))
+	batch.Queue(`select count(*) from erc20_users_with_balance_excluded_transfers($1, $2) where balance > 0;`, utils.NormalizeAddress(config.Store.Addresses.Bond), utils.NormalizeAddresses(config.Store.Addresses.ExcludeTransfers))
 	batch.Queue(`
     select coalesce(sum(total),0) 
     from ( select case when action_type = 'INCREASE' then sum(amount)
