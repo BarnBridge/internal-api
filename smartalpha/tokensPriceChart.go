@@ -59,7 +59,7 @@ func (s *SmartAlpha) TokensPriceChart(ctx *gin.Context) {
 	var points []types.TokensPricePoint
 	for rows.Next() {
 		var p types.TokensPricePoint
-		err := rows.Scan(&p.Point, &p.SeniorTokenPrice, &p.JuniorTokenPrice)
+		err := rows.Scan(&p.Point, &p.JuniorTokenPrice, &p.SeniorTokenPrice)
 		if err != nil {
 			response.Error(ctx, err)
 			return
