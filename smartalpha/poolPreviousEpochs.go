@@ -137,5 +137,39 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		epochs = append(epochs, e)
 	}
 
-	response.OKWithBlock(ctx, s.db, epochs)
+	if len(epochs) == 0 {
+		response.OKWithBlock(ctx, s.db, epochs, response.Meta().Set("hasNewer", false).Set("hasOlder", false))
+		return
+	}
+
+	var hasNext, hasPrev bool
+	err = s.db.Connection().QueryRow(ctx,
+		`
+	select count(*) > 0
+		from smart_alpha.pool_epoch_info p
+				 inner join smart_alpha.epoch_end_events e
+						   on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id 
+			where p.pool_address = $1 and p.epoch_id < $2
+	`,
+		poolAddress, epochs[len(epochs)-1].Id).Scan(&hasPrev)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	err = s.db.Connection().QueryRow(ctx,
+		`
+	select count(*) > 0
+		from smart_alpha.pool_epoch_info p
+				 inner join smart_alpha.epoch_end_events e
+						   on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id 
+			where p.pool_address = $1 and p.epoch_id > $2
+	`,
+		poolAddress, epochs[0].Id).Scan(&hasNext)
+	if err != nil {
+		response.Error(ctx, err)
+		return
+	}
+
+	response.OKWithBlock(ctx, s.db, epochs, response.Meta().Set("hasNewer", hasNext).Set("hasOlder", hasPrev))
 }
