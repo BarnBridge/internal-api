@@ -104,8 +104,8 @@ func (s *SmartExposure) transactions(ctx *gin.Context) {
 						 limit 1),
 						0)                                                                                       as etoken_price,
 			   (select etoken_symbol
-				from smart_exposure.tranches
-				where etoken_address = etoken_address)                                                           as etoken_symbol
+				from smart_exposure.tranches tr
+				where tr.etoken_address = t.etoken_address)                                                           as etoken_symbol
 		from smart_exposure.transaction_history t
 				 inner join smart_exposure.pools p on pool_address = (select pool_address
 																	  from smart_exposure.tranches
@@ -113,7 +113,6 @@ func (s *SmartExposure) transactions(ctx *gin.Context) {
 		$filters$
 		order by included_in_block desc, tx_index desc, log_index desc
 		$offset$ $limit$`)
-
 	rows, err := s.db.Connection().Query(ctx, q, params...)
 	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
