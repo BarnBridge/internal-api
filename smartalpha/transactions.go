@@ -96,8 +96,8 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 		var h types.Transaction
 		var decimals int32
 		var juniorTokenSymbol, seniorTokenSymbol string
-		var poolTokenPrice, juniorTokenPrice, seniorTokenPrice decimal.Decimal
-		err := rows.Scan(&h.PoolAddress, &h.UserAddress, &h.Tranche, &h.TransactionType, &h.Amount, &poolTokenPrice, &juniorTokenPrice, &seniorTokenPrice, &h.AmountInUSD, &h.BlockTimestamp, &h.TransactionHash, &decimals,
+		var poolTokenPrice, poolTokenPriceUSD, juniorTokenPrice, seniorTokenPrice decimal.Decimal
+		err := rows.Scan(&h.PoolAddress, &h.UserAddress, &h.Tranche, &h.TransactionType, &h.Amount, &poolTokenPrice, &juniorTokenPrice, &seniorTokenPrice, &poolTokenPriceUSD, &h.BlockTimestamp, &h.TransactionHash, &decimals,
 			&h.OracleAssetSymbol, &h.PoolTokenSymbol, &juniorTokenSymbol, &seniorTokenSymbol)
 		if err != nil {
 			response.Error(ctx, err)
@@ -105,12 +105,17 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 		}
 
 		h.Amount = h.Amount.Shift(-decimals)
+
 		juniorTokenPrice = juniorTokenPrice.Shift(-18)
 		seniorTokenPrice = seniorTokenPrice.Shift(-18)
-		h.AmountInUSD = h.AmountInUSD.Mul(h.Amount)
+
+		amountInAsset := getAmountInAsset(h.TransactionType, h.Amount, juniorTokenPrice, seniorTokenPrice)
+
+		h.AmountInQuoteAsset = amountInAsset.Mul(poolTokenPrice)
+		h.AmountInUSD = amountInAsset.Mul(poolTokenPriceUSD)
+
 		h.TokenSymbol = getTxTokenSymbol(h.TransactionType, h.PoolTokenSymbol, juniorTokenSymbol, seniorTokenSymbol)
-		h.AmountInQuoteAsset = getTxTokenPrice(h.TransactionType, poolTokenPrice, juniorTokenPrice, seniorTokenPrice)
-		h.AmountInQuoteAsset = h.AmountInQuoteAsset.Mul(h.Amount)
+
 		history = append(history, h)
 	}
 
