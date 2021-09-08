@@ -26,21 +26,23 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 	}
 
 	q, params := builder.Run(`
-					select p.pool_address,
-						   p.pool_name,
-						   p.pool_token_address,
-						   p.pool_token_symbol,
-						   p.pool_token_decimals,
-						   p.junior_token_address,
-						   p.senior_token_address,
-						   p.oracle_address,
-						   p.oracle_asset_symbol,
-						   p.senior_rate_model_address,
-						   p.accounting_model_address,
-						   p.epoch1_start,
-						   p.epoch_duration
-					from smart_alpha.pools p
-					$filters$`)
+		select p.pool_address,
+			   p.pool_name,
+			   p.pool_token_address,
+			   p.pool_token_symbol,
+			   p.pool_token_decimals,
+			   p.junior_token_address,
+			   p.senior_token_address,
+			   p.oracle_address,
+			   p.oracle_asset_symbol,
+			   p.senior_rate_model_address,
+			   p.accounting_model_address,
+			   p.epoch1_start,
+			   p.epoch_duration
+		from smart_alpha.pools p
+		$filters$
+		order by p.start_at_block, p.pool_name
+	`)
 
 	rows, err := s.db.Connection().Query(ctx, q, params...)
 	if err != nil && err != pgx.ErrNoRows {
