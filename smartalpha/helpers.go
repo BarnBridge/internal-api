@@ -74,22 +74,15 @@ func getTxTokenSymbol(txType, poolTokenSymbol, juniorTokenSymbol, seniorTokenSym
 	return tokenActions[txType]
 }
 
-func getTxTokenPrice(txType string, poolTokenPrice, juniorTokenPrice, seniorTokenPrice decimal.Decimal) decimal.Decimal {
-	juniorTokenPrice = juniorTokenPrice.Mul(poolTokenPrice)
-	seniorTokenPrice = seniorTokenPrice.Mul(poolTokenPrice)
-	tokenActions := map[string]decimal.Decimal{
-		"JUNIOR_ENTRY":             poolTokenPrice,
-		"SENIOR_ENTRY":             poolTokenPrice,
-		"JUNIOR_REDEEM_UNDERLYING": poolTokenPrice,
-		"SENIOR_REDEEM_UNDERLYING": poolTokenPrice,
-		"JUNIOR_EXIT":              juniorTokenPrice,
-		"JUNIOR_REDEEM_TOKENS":     juniorTokenPrice,
-		"JTOKEN_SEND":              juniorTokenPrice,
-		"JTOKEN_RECEIVE":           juniorTokenPrice,
-		"SENIOR_EXIT":              seniorTokenPrice,
-		"SENIOR_REDEEM_TOKENS":     seniorTokenPrice,
-		"STOKEN_SEND":              seniorTokenPrice,
-		"STOKEN_RECEIVE":           seniorTokenPrice,
+func getAmountInAsset(txType string, amount, juniorTokenPrice, seniorTokenPrice decimal.Decimal) decimal.Decimal {
+	switch txType {
+	case "JUNIOR_ENTRY", "SENIOR_ENTRY", "JUNIOR_REDEEM_UNDERLYING", "SENIOR_REDEEM_UNDERLYING":
+		return amount
+	case "JUNIOR_EXIT", "JUNIOR_REDEEM_TOKENS", "JTOKEN_SEND", "JTOKEN_RECEIVE":
+		return amount.Mul(juniorTokenPrice)
+	case "SENIOR_EXIT", "SENIOR_REDEEM_TOKENS", "STOKEN_SEND", "STOKEN_RECEIVE":
+		return amount.Mul(seniorTokenPrice)
+	default:
+		return decimal.Zero
 	}
-	return tokenActions[txType]
 }
