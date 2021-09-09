@@ -38,8 +38,15 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 			   p.senior_rate_model_address,
 			   p.accounting_model_address,
 			   p.epoch1_start,
-			   p.epoch_duration
+			   p.epoch_duration,
+			   tvl.epoch_junior_tvl,
+			   tvl.epoch_senior_tvl,
+			   tvl.junior_entry_queue_tvl,
+			   tvl.senior_entry_queue_tvl,
+			   tvl.junior_exited_tvl,
+			   tvl.senior_exited_tvl
 		from smart_alpha.pools p
+			left join smart_alpha.pool_tvl(p.pool_address) tvl on 1=1
 		$filters$
 		order by p.start_at_block, p.pool_name
 	`)
@@ -57,7 +64,8 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 		var p types.Pool
 
 		err = rows.Scan(&p.PoolAddress, &p.PoolName, &p.PoolToken.Address, &p.PoolToken.Symbol, &p.PoolToken.Decimals, &p.JuniorTokenAddress,
-			&p.SeniorTokenAddress, &p.OracleAddress, &p.OracleAssetSymbol, &p.SeniorRateModelAddress, &p.AccountingModelAddress, &p.Epoch1Start, &p.EpochDuration)
+			&p.SeniorTokenAddress, &p.OracleAddress, &p.OracleAssetSymbol, &p.SeniorRateModelAddress, &p.AccountingModelAddress, &p.Epoch1Start, &p.EpochDuration,
+			&p.TVL.EpochJuniorTVL, &p.TVL.EpochSeniorTVL, &p.TVL.JuniorEntryQueueTVL, &p.TVL.SeniorEntryQueueTVL, &p.TVL.JuniorExitedTVL, &p.TVL.SeniorExitedTVL)
 		if err != nil {
 			response.Error(ctx, err)
 			return

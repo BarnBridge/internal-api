@@ -22,4 +22,14 @@ type Pool struct {
 	EpochDuration int64 `json:"epochDuration"`
 
 	State PoolState `json:"state"`
+	TVL   PoolTVL   `json:"tvl"`
+}
+
+type PoolTVL struct {
+	EpochJuniorTVL      float64
+	EpochSeniorTVL      float64
+	JuniorEntryQueueTVL float64
+	SeniorEntryQueueTVL float64
+	JuniorExitedTVL     float64
+	SeniorExitedTVL     float64
 }
