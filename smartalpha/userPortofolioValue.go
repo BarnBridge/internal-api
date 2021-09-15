@@ -31,7 +31,9 @@ func (s *SmartAlpha) UserPortfolioValue(ctx *gin.Context) {
 	query := fmt.Sprintf(`
 			select to_timestamp(ts),
 				   coalesce((select smart_alpha.junior_portfolio_value_at_ts($1, ts)), 0) as junior_value,
-				   coalesce((select smart_alpha.senior_portfolio_value_at_ts($1, ts)), 0) as senior_value
+				   coalesce((select smart_alpha.senior_portfolio_value_at_ts($1, ts)), 0) as senior_value,
+	               coalesce((select smart_alpha.entry_queue_portfolio_value_at_ts($1, ts)), 0) as entry_queue_value,
+	               coalesce((select smart_alpha.exit_queue_portfolio_value_at_ts($1, ts)), 0) as exit_queue_value
 			from generate_series((select extract(epoch from now() - interval % s)::bigint),
 								 (select extract(epoch from now()))::bigint, %s) as ts
 			order by ts;`, window, totalPoints)
@@ -45,7 +47,7 @@ func (s *SmartAlpha) UserPortfolioValue(ctx *gin.Context) {
 
 	for rows.Next() {
 		var p types.UserPortfolioPoint
-		err := rows.Scan(&p.Point, &p.JuniorValue, &p.SeniorValue)
+		err := rows.Scan(&p.Point, &p.JuniorValue, &p.SeniorValue, &p.EntryQueueValue, &p.ExitQueueValue)
 		if err != nil {
 			response.Error(ctx, err)
 			return
