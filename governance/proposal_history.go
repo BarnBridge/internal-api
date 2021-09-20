@@ -227,17 +227,17 @@ func (g *Governance) buildHistory(ctx context.Context, p types.ProposalFull) ([]
 }
 
 func (g *Governance) abrogationProposalData(ctx context.Context, p types.ProposalFull) (string, string, error) {
-	var forVotes, bondStaked string
+	var forVotes, bondStaked decimal.Decimal
 	err := g.db.Connection().QueryRow(ctx, `
 		select 
 		       coalesce(( select sum(power) from governance.abrogation_proposal_votes($1) where support = true ), 0) as for_votes, 
-		       governance.bond_staked_at_ts(to_timestamp((select create_time from governance.abrogation_proposals where proposal_id = $1))) as bond_staked
+		       governance.bond_staked_at_ts((select create_time from governance.abrogation_proposals where proposal_id = $1)) as bond_staked
 	`, p.Id).Scan(&forVotes, &bondStaked)
 	if err != nil {
 		return "", "", errors.Wrap(err, "could not scan number of votes on abrogation proposal")
 	}
 
-	return forVotes, bondStaked, nil
+	return forVotes.String(), bondStaked.String(), nil
 }
 
 func (g *Governance) abrogationProposalExists(ctx context.Context, p types.ProposalFull) (bool, error) {
