@@ -1,11 +1,14 @@
 package smartalpha
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 
 	"github.com/barnbridge/internal-api/response"
 	"github.com/barnbridge/internal-api/smartalpha/types"
@@ -34,8 +37,7 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 	}
 
 	window := strings.ToLower(ctx.DefaultQuery("window", "30d"))
-	totalPoints := getTotalPoints(window)
-	window, _, err := validateWindow(window)
+	startTs, endTs, totalPoints, err := s.poolPerformanceWindow(ctx, window, poolAddress)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -49,16 +51,15 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 					   coalesce(junior_with_sa, 0)                                   as junior_with_sa,
 					   coalesce(token_price_at_ts((select pool_token_address
 												   from smart_alpha.pools
-												   where pool_address = $1),
+												   where pool_address = $3),
 												  (select oracle_asset_symbol
 												   from smart_alpha.pools
-												   where pool_address = $1), ts), 0) as pool_token_price
-				from generate_series((select extract(epoch from now() - interval % s)::bigint),
-									 (select extract(epoch from now()))::bigint, %s) as ts
-						 inner join smart_alpha.performance_at_ts($1, ts) on true
-				order by ts;`, window, totalPoints)
+												   where pool_address = $3), ts), 0) as pool_token_price
+				from generate_series($1,$2, %s) as ts
+						 inner join smart_alpha.performance_at_ts($3, ts) on true
+				order by ts;`, totalPoints)
 
-	rows, err := s.db.Connection().Query(ctx, query, poolAddress)
+	rows, err := s.db.Connection().Query(ctx, query, startTs, endTs, poolAddress)
 	if err != nil && err != sql.ErrNoRows {
 		response.Error(ctx, err)
 		return
@@ -77,4 +78,44 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 	}
 
 	response.OK(ctx, points)
+}
+
+func (s *SmartAlpha) poolPerformanceWindow(ctx context.Context, window string, poolAddress string) (int64, int64, string, error) {
+	var startTs, endTs int64
+	var duration time.Duration
+
+	switch window {
+	case "1w":
+		duration = 7 * 24 * time.Hour
+		startTs = time.Now().Add(-duration).Unix()
+		endTs = time.Now().Unix()
+		return startTs, endTs, "3*60*60", nil
+	case "30d":
+		duration = 30 * 24 * time.Hour
+		startTs = time.Now().Add(-duration).Unix()
+		endTs = time.Now().Unix()
+		return startTs, endTs, "12*60*60", nil
+	case "current":
+		err := s.db.Connection().QueryRow(ctx, `select start_ts,end_ts from smart_alpha.get_epoch_ts($1,(select p.epoch_id from smart_alpha.pool_epoch_info p where p.pool_address = $1 order by p.epoch_id desc limit 1))`, poolAddress).Scan(&startTs, &endTs)
+		if err != nil {
+			return 0, 0, "", errors.Wrap(err, "could not get current epoch timestamps")
+		}
+		return startTs, endTs, "3*60*60", nil
+	case "last":
+		err := s.db.Connection().QueryRow(ctx, `select start_ts,end_ts  from smart_alpha.get_epoch_ts($1,((select p.epoch_id from smart_alpha.pool_epoch_info p where p.pool_address = $1 order by p.epoch_id desc limit 1)-1))`, poolAddress).Scan(&startTs, &endTs)
+		if err != nil {
+			return 0, 0, "", errors.Wrap(err, "could not get last epoch timestamps")
+		}
+		return startTs, endTs, "3*60*60", nil
+	default:
+		var err error
+		duration, err = time.ParseDuration(window)
+		startTs = time.Now().Add(-duration).Unix()
+		endTs = time.Now().Unix()
+		if err != nil {
+			return 0, 0, "", errors.Wrap(err, "invalid window")
+		}
+
+		return startTs, endTs, "30*60", nil
+	}
 }
