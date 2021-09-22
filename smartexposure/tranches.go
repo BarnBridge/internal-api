@@ -169,5 +169,6 @@ func (s *SmartExposure) trancheDetails(ctx *gin.Context) {
 	t.TokenA.State = &tokenAState
 	t.TokenB.State = &tokenBState
 	t.RebalancingCondition = rebalancingCondition.String()
+	t.ETokenAddress = utils.NormalizeAddress(eTokenAddress)
 	response.OKWithBlock(ctx, s.db, t)
 }
