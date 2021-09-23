@@ -29,10 +29,9 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 
 	rows, err := s.db.Connection().Query(ctx, `
 				select p.epoch1_start,
-					   p.epoch_duration,
 					   e.block_timestamp
 				from smart_alpha.pools p
-					inner join smart_alpha.epoch_end_events e on e.pool_address = p.pool_address
+					left join smart_alpha.epoch_end_events e on e.pool_address = p.pool_address
 				where p.pool_address = $1
 				order by e.epoch_id desc limit 2`, poolAddress)
 	if err != nil && err != pgx.ErrNoRows {
@@ -45,21 +44,31 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 		return
 	}
 
-	var epoch1Start, epochDuration, currentEpoch int64
 	var epochTs []int64
+	var epoch1Start *int64
 	for rows.Next() {
-		var ts int64
-		err = rows.Scan(&epoch1Start, &epochDuration, &ts)
+		var ts *int64
+		err = rows.Scan(&epoch1Start, &ts)
 		if err != nil {
 			response.Error(ctx, err)
 			return
 		}
-		epochTs = append(epochTs, ts)
+
+		if ts != nil {
+			epochTs = append(epochTs, *ts)
+		}
 	}
 
-	currentEpoch = getCurrentEpoch(epoch1Start, epochDuration)
+	if epoch1Start == nil {
+		response.NotFound(ctx)
+		return
+	} else if len(epochTs) == 0 {
+		response.OK(ctx, []types.PerformancePoint{})
+		return
+	}
+
 	window := strings.ToLower(ctx.DefaultQuery("window", "30d"))
-	if window == "last" && currentEpoch == 0 {
+	if window == "last" && len(epochTs) == 1 {
 		response.OK(ctx, []types.PerformancePoint{})
 		return
 	}
@@ -68,6 +77,14 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 	if err != nil {
 		response.Error(ctx, err)
 		return
+	}
+
+	if startTs < *epoch1Start {
+		startTs = *epoch1Start
+	}
+
+	if endTs < startTs {
+		endTs = startTs
 	}
 
 	pointDistance := (endTs - startTs) / ChartNrOfPoints
