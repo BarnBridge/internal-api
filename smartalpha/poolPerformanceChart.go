@@ -14,9 +14,6 @@ import (
 	"github.com/barnbridge/internal-api/utils"
 )
 
-type epochStatus struct {
-}
-
 func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 	poolAddress := ctx.Param("poolAddress")
 	if poolAddress == "" {
@@ -75,7 +72,7 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 
 	pointDistance := (endTs - startTs) / ChartNrOfPoints
 
-	if pointDistance < 0 {
+	if pointDistance < 1 {
 		pointDistance = 1
 	}
 

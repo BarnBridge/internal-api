@@ -1,3 +1,3 @@
 package smartalpha
 
-const ChartNrOfPoints = 60
+const ChartNrOfPoints = 30
