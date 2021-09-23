@@ -67,7 +67,7 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 		return
 	}
 
-	startTs, endTs, err := s.poolPerformanceWindow(window, epoch1Start, epochDuration, currentEpoch, epochTs)
+	startTs, endTs, err := s.poolPerformanceWindow(window, epochTs)
 	if err != nil {
 		response.Error(ctx, err)
 		return
@@ -112,7 +112,7 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 	response.OK(ctx, points)
 }
 
-func (s *SmartAlpha) poolPerformanceWindow(window string, epoch1Start int64, epochDuration int64, currentEpoch int64, epochTs []int64) (int64, int64, error) {
+func (s *SmartAlpha) poolPerformanceWindow(window string, epochTs []int64) (int64, int64, error) {
 	var startTs, endTs int64
 	var duration time.Duration
 
