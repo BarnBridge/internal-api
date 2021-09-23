@@ -3,6 +3,7 @@ package smartalpha
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -85,4 +86,13 @@ func getAmountInAsset(txType string, amount, juniorTokenPrice, seniorTokenPrice 
 	default:
 		return decimal.Zero
 	}
+}
+
+func getCurrentEpoch(epoch1Start int64, epochDuration int64) int64 {
+	var now = time.Now().Unix()
+	if now < epoch1Start {
+		return 0
+	}
+
+	return (now-epoch1Start)/epochDuration + 1
 }
