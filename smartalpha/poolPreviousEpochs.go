@@ -40,12 +40,15 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 	}
 
 	var dirOperator string
+	var orderDirection string
 	direction := strings.ToLower(ctx.DefaultQuery("direction", "down"))
 	switch direction {
 	case "up":
 		dirOperator = ">="
+		orderDirection = "asc"
 	case "down":
 		dirOperator = "<="
+		orderDirection = "desc"
 	default:
 		response.Error(ctx, errors.New("invalid parameter 'direction'"))
 		return
@@ -71,7 +74,7 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 	}
 
 	rows, err := s.db.Connection().Query(ctx,
-		fmt.Sprintf(`
+		fmt.Sprintf(`select * from (
 		select p.epoch_id,
 			   p.senior_liquidity,
 			   p.junior_liquidity,
@@ -93,9 +96,9 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 				 inner join smart_alpha.epoch_end_events e
 						   on e.pool_address = p.pool_address and e.epoch_id = p.epoch_id 
 			where p.pool_address = $1 and p.epoch_id %s $2
-			order by p.epoch_id desc
-			limit $3
-	`, dirOperator), poolAddress, cursor, limit)
+			order by p.epoch_id %s
+			limit $3) x order by x.epoch_id desc
+	`, dirOperator, orderDirection), poolAddress, cursor, limit)
 	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
 		return
