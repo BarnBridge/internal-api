@@ -14,6 +14,9 @@ import (
 	"github.com/barnbridge/internal-api/utils"
 )
 
+type epochStatus struct {
+}
+
 func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 	poolAddress := ctx.Param("poolAddress")
 	if poolAddress == "" {
@@ -21,19 +24,20 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 		return
 	}
 
-	var epoch1Start, epochDuration, currentEpoch int64
-
 	poolAddress, err := utils.ValidateAccount(poolAddress)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
-	err = s.db.Connection().QueryRow(ctx, `
+	rows, err := s.db.Connection().Query(ctx, `
 				select p.epoch1_start,
-					   p.epoch_duration
+					   p.epoch_duration,
+					   e.block_timestamp
 				from smart_alpha.pools p
-				where p.pool_address = $1`, poolAddress).Scan(&epoch1Start, &epochDuration)
+					inner join smart_alpha.epoch_end_events e on e.pool_address = p.pool_address
+				where p.pool_address = $1
+				order by e.epoch_id desc limit 2`, poolAddress)
 	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
 		return
@@ -44,6 +48,18 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 		return
 	}
 
+	var epoch1Start, epochDuration, currentEpoch int64
+	var epochTs []int64
+	for rows.Next() {
+		var ts int64
+		err = rows.Scan(&epoch1Start, &epochDuration, &ts)
+		if err != nil {
+			response.Error(ctx, err)
+			return
+		}
+		epochTs = append(epochTs, ts)
+	}
+
 	currentEpoch = getCurrentEpoch(epoch1Start, epochDuration)
 	window := strings.ToLower(ctx.DefaultQuery("window", "30d"))
 	if window == "last" && currentEpoch == 0 {
@@ -51,13 +67,17 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 		return
 	}
 
-	startTs, endTs, err := s.poolPerformanceWindow(window, epoch1Start, epochDuration, currentEpoch)
+	startTs, endTs, err := s.poolPerformanceWindow(window, epoch1Start, epochDuration, currentEpoch, epochTs)
 	if err != nil {
 		response.Error(ctx, err)
 		return
 	}
 
 	pointDistance := (endTs - startTs) / ChartNrOfPoints
+
+	if pointDistance < 0 {
+		pointDistance = 1
+	}
 
 	query := `	select to_timestamp(ts)               as point,
 					   coalesce(senior_without_sa, 0) as senior_without_sa,
@@ -71,7 +91,7 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 						 inner join smart_alpha.performance_at_ts($4, ts) on true
 				order by ts;`
 
-	rows, err := s.db.Connection().Query(ctx, query, startTs, endTs, pointDistance, poolAddress)
+	rows, err = s.db.Connection().Query(ctx, query, startTs, endTs, pointDistance, poolAddress)
 	if err != nil && err != sql.ErrNoRows {
 		response.Error(ctx, err)
 		return
@@ -92,7 +112,7 @@ func (s *SmartAlpha) poolPerformanceChart(ctx *gin.Context) {
 	response.OK(ctx, points)
 }
 
-func (s *SmartAlpha) poolPerformanceWindow(window string, epoch1Start int64, epochDuration int64, currentEpoch int64) (int64, int64, error) {
+func (s *SmartAlpha) poolPerformanceWindow(window string, epoch1Start int64, epochDuration int64, currentEpoch int64, epochTs []int64) (int64, int64, error) {
 	var startTs, endTs int64
 	var duration time.Duration
 
@@ -102,23 +122,19 @@ func (s *SmartAlpha) poolPerformanceWindow(window string, epoch1Start int64, epo
 		startTs = time.Now().Add(-duration).Unix()
 		endTs = time.Now().Unix()
 
-		return startTs, endTs, nil
 	case "30d":
 		duration = 30 * 24 * time.Hour
 		startTs = time.Now().Add(-duration).Unix()
 		endTs = time.Now().Unix()
 
-		return startTs, endTs, nil
 	case "current":
-		startTs = epoch1Start + (currentEpoch-1)*epochDuration
-		endTs = epoch1Start + currentEpoch*epochDuration - 1
+		startTs = epochTs[0]
+		endTs = time.Now().Unix()
 
-		return startTs, endTs, nil
 	case "last":
-		startTs = epoch1Start + (currentEpoch-2)*epochDuration
-		endTs = epoch1Start + (currentEpoch-1)*epochDuration - 1
+		startTs = epochTs[1]
+		endTs = epochTs[0] - 1
 
-		return startTs, endTs, nil
 	default:
 		var err error
 		duration, err = time.ParseDuration(window)
@@ -128,6 +144,7 @@ func (s *SmartAlpha) poolPerformanceWindow(window string, epoch1Start int64, epo
 			return 0, 0, errors.Wrap(err, "invalid window")
 		}
 
-		return startTs, endTs, nil
 	}
+
+	return startTs, endTs, nil
 }
