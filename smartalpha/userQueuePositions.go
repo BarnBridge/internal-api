@@ -1,9 +1,8 @@
 package smartalpha
 
 import (
-	"database/sql"
-
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 
 	"github.com/barnbridge/internal-api/response"
@@ -16,6 +15,19 @@ func (s *SmartAlpha) UserQueuePositions(ctx *gin.Context) {
 	userAddress, err := utils.ValidateAccount(userAddress)
 	if err != nil {
 		response.Error(ctx, errors.Wrap(err, "invalid user address"))
+		return
+	}
+
+	includeActiveVal := ctx.DefaultQuery("includeActive", "false")
+	var includeActive bool
+	switch includeActiveVal {
+	case "true":
+		includeActive = true
+	case "false":
+		includeActive = false
+	default:
+		response.Error(ctx, errors.New("invalid parameter `includeActive`"))
+		return
 	}
 
 	rows, err := s.db.Connection().Query(ctx, `
@@ -46,7 +58,7 @@ func (s *SmartAlpha) UserQueuePositions(ctx *gin.Context) {
 				where x.user_address = $1 and (select count(*) from smart_alpha.user_redeem_underlying_events ru where ru.pool_address = x.pool_address and ru.user_address = x.user_address and x.epoch_id = ru.epoch_id) = 0
 				order by block_timestamp desc`, userAddress)
 
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != pgx.ErrNoRows {
 		response.Error(ctx, err)
 		return
 	}
@@ -65,5 +77,49 @@ func (s *SmartAlpha) UserQueuePositions(ctx *gin.Context) {
 		userQueuePositions = append(userQueuePositions, u)
 	}
 
+	if includeActive {
+		rows, err := s.db.Connection().Query(ctx, `
+			select distinct on (pool_address) coalesce(x1.pool_address, x2.pool_address) as pool_address,
+											  coalesce(x1.pool_name, x2.pool_name),
+											  coalesce(x1.pool_token_address, x2.pool_token_address),
+											  coalesce(x1.pool_token_symbol, x2.pool_token_symbol),
+											  coalesce(x1.pool_token_decimals, x2.pool_token_decimals),
+											  coalesce(x1.oracle_asset_symbol, x2.oracle_asset_symbol)
+			from public.erc20_balances_at_ts($1,
+											 ( select array_agg(junior_token_address) || array_agg(senior_token_address)
+											   from smart_alpha.pools ), ( select extract(epoch from now()) )::bigint)
+					 left join smart_alpha.pools x1 on x1.senior_token_address = token_address
+					 left join smart_alpha.pools x2 on x2.junior_token_address = token_address
+			where balance > 0;
+		`, userAddress)
+		if err != nil && err != pgx.ErrNoRows {
+			response.Error(ctx, err)
+			return
+		}
+
+		defer rows.Close()
+
+		for rows.Next() {
+			var u types.UserQueuePosition
+			err := rows.Scan(&u.PoolAddress, &u.PoolName, &u.PoolToken.Address, &u.PoolToken.Symbol, &u.PoolToken.Decimals, &u.OracleAssetSymbol)
+			if err != nil {
+				response.Error(ctx, err)
+				return
+			}
+
+			userQueuePositions = appendQueuePositionIfNotExists(userQueuePositions, u)
+		}
+	}
+
 	response.OK(ctx, userQueuePositions)
+}
+
+func appendQueuePositionIfNotExists(positions []types.UserQueuePosition, newPosition types.UserQueuePosition) []types.UserQueuePosition {
+	for _, v := range positions {
+		if v.PoolName == newPosition.PoolName {
+			return positions
+		}
+	}
+
+	return append(positions, newPosition)
 }
