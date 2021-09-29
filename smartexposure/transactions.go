@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 
 	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
@@ -129,6 +130,8 @@ func (s *SmartExposure) transactions(ctx *gin.Context) {
 			response.Error(ctx, err)
 			return
 		}
+
+		h.SFactorE = decimal.NewFromInt(10).Pow(decimal.NewFromInt(18))
 
 		history = append(history, h)
 	}
