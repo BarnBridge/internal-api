@@ -39,12 +39,12 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 			   p.accounting_model_address,
 			   p.epoch1_start,
 			   p.epoch_duration,
-			   tvl.epoch_junior_tvl,
-			   tvl.epoch_senior_tvl,
-			   tvl.junior_entry_queue_tvl,
-			   tvl.senior_entry_queue_tvl,
-			   tvl.junior_exited_tvl,
-			   tvl.senior_exited_tvl
+			   coalesce(tvl.epoch_junior_tvl,0),
+			   coalesce(tvl.epoch_senior_tvl,0),
+			   coalesce(tvl.junior_entry_queue_tvl,0),
+			   coalesce(tvl.senior_entry_queue_tvl,0),
+			   coalesce(tvl.junior_exited_tvl,0),
+			   coalesce(tvl.senior_exited_tvl,0)
 		from smart_alpha.pools p
 			left join smart_alpha.pool_tvl(p.pool_address) tvl on 1=1
 		$filters$
