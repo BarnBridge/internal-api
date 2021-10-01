@@ -26,4 +26,7 @@ func (s *SmartAlpha) SetRoutes(engine *gin.Engine) {
 	smartalpha.GET("/users/:address/queue-positions", s.UserQueuePositions)
 
 	smartalpha.GET("/transactions", s.transactions)
+
+	smartalpha.GET("/rewards/pools", s.RewardPools)
+	smartalpha.GET("/rewards/pools/:poolAddress/transactions", s.RewardPoolTransactions)
 }
