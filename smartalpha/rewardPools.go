@@ -18,9 +18,14 @@ import (
 func (s *SmartAlpha) RewardPools(ctx *gin.Context) {
 	builder := query.New()
 
-	underlyingSymbol := strings.ToUpper(ctx.DefaultQuery("underlyingSymbol", "all"))
-	if underlyingSymbol != "ALL" {
-		builder.Filters.Add("upper(t.symbol)", underlyingSymbol)
+	pool := ctx.DefaultQuery("poolAddress", "")
+	if pool != "" {
+		rewardPoolAddress, err := utils.ValidateAccount(pool)
+		if err != nil {
+			response.BadRequest(ctx, errors.New("invalid pool address"))
+			return
+		}
+		builder.Filters.Add("r.pool_address", rewardPoolAddress)
 	}
 
 	query, params := builder.Run(`
