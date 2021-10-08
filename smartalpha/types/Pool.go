@@ -23,6 +23,8 @@ type Pool struct {
 
 	State PoolState `json:"state"`
 	TVL   PoolTVL   `json:"tvl"`
+
+	UserHasActivePosition *bool `json:"userHasActivePosition,omitempty"`
 }
 
 type PoolTVL struct {

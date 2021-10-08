@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
+	"github.com/pkg/errors"
 
 	"github.com/barnbridge/internal-api/query"
 	"github.com/barnbridge/internal-api/response"
@@ -93,6 +94,54 @@ func (s *SmartAlpha) Pools(ctx *gin.Context) {
 		p.State.JuniorLiquidity = p.State.JuniorLiquidity.Shift(-int32(p.PoolToken.Decimals))
 
 		pools = append(pools, p)
+	}
+
+	userAddress := ctx.DefaultQuery("userAddress", "")
+	if userAddress != "" {
+		userAddress, err := utils.ValidateAccount(userAddress)
+		if err != nil {
+			response.Error(ctx, errors.Wrap(err, "invalid user address"))
+			return
+		}
+
+		for i := range pools {
+			x := false
+			pools[i].UserHasActivePosition = &x
+		}
+
+		rows, err := s.db.Connection().Query(ctx, `
+			select distinct on (pool_address) coalesce(x1.pool_address, x2.pool_address) as pool_address
+			from public.erc20_balances_at_ts($1,
+											 ( select array_agg(junior_token_address) || array_agg(senior_token_address)
+											   from smart_alpha.pools ), ( select extract(epoch from now()) )::bigint)
+					 left join smart_alpha.pools x1 on x1.senior_token_address = token_address
+					 left join smart_alpha.pools x2 on x2.junior_token_address = token_address
+			where balance > 0;
+		`, userAddress)
+		if err != nil && err != pgx.ErrNoRows {
+			response.Error(ctx, err)
+			return
+		}
+
+		defer rows.Close()
+
+		for rows.Next() {
+			var poolAddr string
+
+			err := rows.Scan(&poolAddr)
+			if err != nil {
+				response.Error(ctx, err)
+				return
+			}
+
+			for i := range pools {
+				if utils.NormalizeAddress(pools[i].PoolAddress) == utils.NormalizeAddress(poolAddr) {
+					x := true
+					pools[i].UserHasActivePosition = &x
+					break
+				}
+			}
+		}
 	}
 
 	response.OK(ctx, pools)
