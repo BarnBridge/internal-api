@@ -32,6 +32,8 @@ type PoolTVL struct {
 	EpochSeniorTVL      float64 `json:"epochSeniorTVL"`
 	JuniorEntryQueueTVL float64 `json:"juniorEntryQueueTVL"`
 	SeniorEntryQueueTVL float64 `json:"seniorEntryQueueTVL"`
+	JuniorExitQueueTVL  float64 `json:"juniorExitQueueTVL"`
+	SeniorExitQueueTVL  float64 `json:"seniorExitQueueTVL"`
 	JuniorExitedTVL     float64 `json:"juniorExitedTVL"`
 	SeniorExitedTVL     float64 `json:"seniorExitedTVL"`
 }
