@@ -77,7 +77,10 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 			   p.oracle_asset_symbol,
 			   p.pool_token_symbol,
 			   p.junior_token_symbol,
-			   p.senior_token_symbol
+			   p.senior_token_symbol,
+	           p.pool_token_address,
+	           p.junior_token_address,
+	           p.senior_token_address
 		from smart_alpha.transaction_history t
 				 inner join smart_alpha.pools p on p.pool_address = t.pool_address
 		$filters$
@@ -96,9 +99,10 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 		var h types.Transaction
 		var decimals int32
 		var juniorTokenSymbol, seniorTokenSymbol string
+		var juniorTokenAddress, seniorTokenAddress string
 		var poolTokenPrice, poolTokenPriceUSD, juniorTokenPrice, seniorTokenPrice decimal.Decimal
 		err := rows.Scan(&h.PoolAddress, &h.UserAddress, &h.Tranche, &h.TransactionType, &h.Amount, &poolTokenPrice, &juniorTokenPrice, &seniorTokenPrice, &poolTokenPriceUSD, &h.BlockTimestamp, &h.TransactionHash, &decimals,
-			&h.OracleAssetSymbol, &h.PoolTokenSymbol, &juniorTokenSymbol, &seniorTokenSymbol)
+			&h.OracleAssetSymbol, &h.PoolTokenSymbol, &juniorTokenSymbol, &seniorTokenSymbol, &h.PoolTokenAddress, &juniorTokenAddress, &seniorTokenAddress)
 		if err != nil {
 			response.Error(ctx, err)
 			return
@@ -115,6 +119,14 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 		h.AmountInUSD = amountInAsset.Mul(poolTokenPriceUSD)
 
 		h.TokenSymbol = getTxTokenSymbol(h.TransactionType, h.PoolTokenSymbol, juniorTokenSymbol, seniorTokenSymbol)
+		switch h.TokenSymbol {
+		case h.PoolTokenSymbol:
+			h.TokenAddress = h.PoolTokenAddress
+		case juniorTokenSymbol:
+			h.TokenAddress = juniorTokenAddress
+		case seniorTokenSymbol:
+			h.TokenAddress = seniorTokenAddress
+		}
 
 		history = append(history, h)
 	}
