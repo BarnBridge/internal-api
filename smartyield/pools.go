@@ -31,7 +31,7 @@ func (h *SmartYield) Pools(ctx *gin.Context) {
 
 	query, params := builder.Run(`
 		select protocol_id,
-			   pool_address,
+			   p.pool_address,
 			   controller_address,
 			   model_address,
 			   provider_address,
@@ -42,8 +42,42 @@ func (h *SmartYield) Pools(ctx *gin.Context) {
 			   underlying_address,
 			   underlying_symbol,
 			   underlying_decimals,
-			   coalesce((select pool_address from smart_yield.reward_pools where pool_token_address = p.pool_address ), '') as reward_pool_address
+			   coalesce(( select pool_address from smart_yield.reward_pools where pool_token_address = p.pool_address ),
+						'')                                                     as reward_pool_address,
+			   smart_yield.number_of_seniors(p.pool_address)                    as number_of_seniors,
+			   smart_yield.number_of_active_juniors(p.pool_address)             as number_of_juniors,
+			   smart_yield.number_of_juniors_locked(p.pool_address)             as number_of_juniors_locked,
+			   coalesce(smart_yield.junior_liquidity_locked(p.pool_address), 0) as junior_liquidity_locked,
+			   coalesce(x.avg_junior_apy, 0)                                    as avg_junior_apy,
+			   y.included_in_block,
+			   y.block_timestamp,
+			   y.senior_liquidity,
+			   y.junior_liquidity,
+			   y.jtoken_price,
+			   y.senior_apy,
+			   y.junior_apy,
+			   y.originator_apy,
+			   y.originator_net_apy,
+			   y.avg_senior_buy
 		from smart_yield.pools p
+				 left join smart_yield.junior_apy_30d_avg x on p.pool_address = x.pool_address
+				 left join ( select pool_address,
+									included_in_block,
+									to_timestamp(block_timestamp) as block_timestamp,
+									senior_liquidity,
+									junior_liquidity,
+									jtoken_price,
+									senior_apy,
+									junior_apy,
+									originator_apy,
+									originator_net_apy,
+									(abond_matures_at - ( select extract(epoch from now()) ))::double precision /
+									(60 * 60 * 24)                as avg_senior_buy
+							 from smart_yield.pool_state ps
+							 where block_timestamp = ( select block_timestamp
+													   from smart_yield.pool_state
+													   order by block_timestamp desc
+													   limit 1 ) ) y on p.pool_address = y.pool_address
 		$filters$
 		`)
 
@@ -58,40 +92,33 @@ func (h *SmartYield) Pools(ctx *gin.Context) {
 	var pools []types.Pool
 	for rows.Next() {
 		var p types.Pool
-
-		err := rows.Scan(&p.ProtocolId, &p.PoolAddress, &p.ControllerAddress, &p.ModelAddress, &p.ProviderAddress, &p.OracleAddress, &p.JuniorBondAddress, &p.SeniorBondAddress, &p.CTokenAddress, &p.UnderlyingAddress, &p.UnderlyingSymbol, &p.UnderlyingDecimals, &p.RewardPoolAddress)
-		if err != nil {
-			response.Error(ctx, err)
-			return
-		}
-
 		var state types.PoolState
-		err = h.db.Connection().QueryRow(ctx, `
-			select included_in_block,
-				   to_timestamp(block_timestamp),
-				   senior_liquidity,
-				   junior_liquidity,
-				   jtoken_price,
-				   senior_apy,
-				   junior_apy,
-				   originator_apy,
-				   originator_net_apy,
-				   smart_yield.number_of_seniors(pool_address)                      as number_of_seniors,
-				   smart_yield.number_of_active_juniors(pool_address)               as number_of_juniors,
-			       smart_yield.number_of_juniors_locked(pool_address)               as number_of_juniors_locked,
-				   (abond_matures_at - (select extract (epoch from now())))::double precision / (60*60*24)     as avg_senior_buy,
-				   coalesce(smart_yield.junior_liquidity_locked(pool_address), 0)   as junior_liquidity_locked
-			from smart_yield.pool_state
-			where pool_address = $1
-			order by block_timestamp desc
-			limit 1;
-		`, p.PoolAddress).Scan(
+
+		err := rows.Scan(
+			&p.ProtocolId,
+			&p.PoolAddress,
+			&p.ControllerAddress,
+			&p.ModelAddress,
+			&p.ProviderAddress,
+			&p.OracleAddress,
+			&p.JuniorBondAddress,
+			&p.SeniorBondAddress,
+			&p.CTokenAddress,
+			&p.UnderlyingAddress,
+			&p.UnderlyingSymbol,
+			&p.UnderlyingDecimals,
+			&p.RewardPoolAddress,
+			&state.NumberOfSeniors,
+			&state.NumberOfJuniors,
+			&state.NumberOfJuniorsLocked,
+			&state.JuniorLiquidityLocked,
+			&state.JuniorAPYPast30dAvg,
 			&state.BlockNumber, &state.BlockTimestamp,
 			&state.SeniorLiquidity, &state.JuniorLiquidity, &state.JTokenPrice, &state.SeniorAPY, &state.JuniorAPY,
 			&state.OriginatorApy, &state.OriginatorNetApy,
-			&state.NumberOfSeniors, &state.NumberOfJuniors, &state.NumberOfJuniorsLocked, &state.AvgSeniorMaturityDays, &state.JuniorLiquidityLocked,
+			&state.AvgSeniorMaturityDays,
 		)
-		if err != nil && err != pgx.ErrNoRows {
+		if err != nil {
 			response.Error(ctx, err)
 			return
 		}

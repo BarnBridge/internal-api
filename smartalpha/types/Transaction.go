@@ -10,7 +10,9 @@ type Transaction struct {
 	Tranche            string          `json:"tranche"`
 	TransactionType    string          `json:"transactionType"`
 	PoolTokenSymbol    string          `json:"poolTokenSymbol"`
+	PoolTokenAddress   string          `json:"poolTokenAddress"`
 	TokenSymbol        string          `json:"tokenSymbol"`
+	TokenAddress       string          `json:"tokenAddress"`
 	OracleAssetSymbol  string          `json:"oracleAssetSymbol"`
 	Amount             decimal.Decimal `json:"amount"`
 	AmountInQuoteAsset decimal.Decimal `json:"amountInQuoteAsset"`

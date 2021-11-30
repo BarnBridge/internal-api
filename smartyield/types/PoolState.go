@@ -14,6 +14,7 @@ type PoolState struct {
 	JTokenPrice           decimal.Decimal `json:"jTokenPrice"`
 	SeniorAPY             float64         `json:"seniorApy"`
 	JuniorAPY             float64         `json:"juniorApy"`
+	JuniorAPYPast30dAvg   float64         `json:"juniorAPYPast30DAvg"`
 	OriginatorApy         float64         `json:"originatorApy"`
 	OriginatorNetApy      float64         `json:"originatorNetApy"`
 	AvgSeniorMaturityDays float64         `json:"avgSeniorMaturityDays"`
