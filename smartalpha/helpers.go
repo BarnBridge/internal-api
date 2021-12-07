@@ -86,3 +86,16 @@ func getAmountInAsset(txType string, amount, juniorTokenPrice, seniorTokenPrice 
 		return decimal.Zero
 	}
 }
+
+func (s *SmartAlpha) getLastPoolStateTimestamp(ctx context.Context, poolAddress string) (error, int64) {
+	var ts int64
+
+	err := s.db.Connection().QueryRow(ctx, `
+			select block_timestamp
+			from smart_alpha.pool_state
+			where pool_address = $1
+			order by block_timestamp desc
+			limit 1`, poolAddress).Scan(&ts)
+
+	return err, ts
+}
