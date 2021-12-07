@@ -67,7 +67,7 @@ func (s *SmartAlpha) TokensPriceAtTs(ctx *gin.Context) {
 
 	p.JuniorTokenPrice = p.JuniorTokenPrice.Shift(-18)
 	p.SeniorTokenPrice = p.SeniorTokenPrice.Shift(-18)
-	p.Timestamp = time.Unix(ts, 0)
+	p.Timestamp = time.Unix(ts, 0).UTC()
 
 	response.OK(ctx, p)
 }
