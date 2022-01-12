@@ -61,11 +61,11 @@ func (s *SmartAlpha) transactions(ctx *gin.Context) {
 													 limit 1), t.block_timestamp)),
 			   coalesce((select junior_token_price_start
 				from smart_alpha.pool_epoch_info pi
-				where pi.block_timestamp <= t.block_timestamp
+				where pi.pool_address = t.pool_address and pi.block_timestamp <= t.block_timestamp
 				order by epoch_id desc limit 1), '1e18'),
 			   coalesce((select senior_token_price_start
 				from smart_alpha.pool_epoch_info pi
-				where pi.block_timestamp <= t.block_timestamp
+				where pi.pool_address = t.pool_address and pi.block_timestamp <= t.block_timestamp
 				order by epoch_id desc limit 1), '1e18'),
 			   (select token_usd_price_at_ts((select pool_token_address
 											  from smart_alpha.pools p
