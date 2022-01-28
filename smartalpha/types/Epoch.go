@@ -13,8 +13,10 @@ type Epoch struct {
 	StartDate              *int64          `json:"startDate"`
 	EndDate                *int64          `json:"endDate"`
 	EntryPrice             decimal.Decimal `json:"entryPrice"`
+	EndPrice               decimal.Decimal `json:"endPrice"`
 	JuniorProfits          decimal.Decimal `json:"juniorProfits"`
 	SeniorProfits          decimal.Decimal `json:"seniorProfits"`
 	JuniorTokenPriceStart  decimal.Decimal `json:"juniorTokenPriceStart"`
 	SeniorTokenPriceStart  decimal.Decimal `json:"seniorTokenPriceStart"`
+	RealDownsideLeverage   decimal.Decimal `json:"realDownsideLeverage"`
 }
