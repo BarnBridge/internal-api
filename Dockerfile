@@ -1,4 +1,4 @@
-FROM golang:1.16 AS build
+FROM golang:1.17 AS build
 
 RUN mkdir -p /internal-api
 WORKDIR /internal-api
