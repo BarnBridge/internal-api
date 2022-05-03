@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 
 	"github.com/barnbridge/internal-api/response"
 	"github.com/barnbridge/internal-api/smartalpha/types"
@@ -81,6 +82,7 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 			   p.upside_exposure_rate,
 			   p.downside_protection_rate,
 			   coalesce(p.epoch_entry_price, 0),
+			   ( select p1.epoch_entry_price from smart_alpha.pool_epoch_info p1 where p1.pool_address = p.pool_address and p1.epoch_id > p.epoch_id order by p1.epoch_id asc limit 1 ), 
 			   ( select block_timestamp + 1
 				 from smart_alpha.epoch_end_events
 				 where pool_address = p.pool_address
@@ -112,7 +114,7 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		err := rows.Scan(&e.Id,
 			&e.SeniorLiquidity, &e.JuniorLiquidity,
 			&e.UpsideExposureRate, &e.DownsideProtectionRate,
-			&e.EntryPrice,
+			&e.EntryPrice, &e.EndPrice,
 			&e.StartDate, &e.EndDate,
 			&e.JuniorProfits, &e.SeniorProfits,
 			&e.JuniorTokenPriceStart, &e.SeniorTokenPriceStart,
@@ -136,6 +138,17 @@ func (s *SmartAlpha) poolPreviousEpochs(ctx *gin.Context) {
 		e.JuniorTokenPriceStart = e.JuniorTokenPriceStart.Shift(-18)
 		e.SeniorTokenPriceStart = e.SeniorTokenPriceStart.Shift(-18)
 		e.EntryPrice = e.EntryPrice.Shift(-priceDecimals)
+		e.EndPrice = e.EndPrice.Shift(-priceDecimals)
+
+		if !e.SeniorProfits.Equal(decimal.Zero) {
+			juniorValueStart := e.JuniorLiquidity.Mul(e.EntryPrice)
+			juniorValueEndNoSA := e.JuniorLiquidity.Mul(e.EndPrice)
+			juniorValueEnd := e.JuniorLiquidity.Sub(e.SeniorProfits).Mul(e.EndPrice)
+
+			lossNoSA := juniorValueStart.Sub(juniorValueEndNoSA)
+			lossSA := juniorValueStart.Sub(juniorValueEnd)
+			e.RealDownsideLeverage = lossSA.Div(lossNoSA)
+		}
 
 		epochs = append(epochs, e)
 	}
