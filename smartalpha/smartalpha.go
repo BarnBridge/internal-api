@@ -21,6 +21,7 @@ func (s *SmartAlpha) SetRoutes(engine *gin.Engine) {
 	smartalpha.GET("/pools/:poolAddress/tokens-price-chart", s.TokensPriceChart)
 	smartalpha.GET("/pools/:poolAddress/pool-performance-chart", s.poolPerformanceChart)
 	smartalpha.GET("/pools/:poolAddress/previous-epochs", s.poolPreviousEpochs)
+	smartalpha.GET("/pools/:poolAddress/tokens-price", s.TokensPriceAtTs)
 
 	smartalpha.GET("/users/:address/portfolio-value", s.UserPortfolioValue)
 	smartalpha.GET("/users/:address/queue-positions", s.UserQueuePositions)
